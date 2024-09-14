@@ -1,7 +1,25 @@
-from pydantic import BaseModel, EmailStr
+import uuid
+from typing import Optional
+
+from pydantic import UUID4, EmailStr, Field
 
 from app.core.auth import get_password_hash
 from app.core.database import DataBase
+
+
+class UserIn(DataBase):
+    id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()))
+    username: str = Field(..., min_length=3, max_length=50)
+    email: EmailStr = Field(...)
+    password: str = Field(..., min_length=8)
+
+    @classmethod
+    async def create_user(cls, username: str, email: str, password: str):
+        query = """
+            INSERT INTO users (username, email, password)
+                 VALUES ($1, $2, $3);
+        """
+        return await cls.execute(query, username, email, get_password_hash(password))
 
 
 class UserLogin(DataBase):
@@ -19,21 +37,17 @@ class UserLogin(DataBase):
         return dict(user) if user else None
 
 
-
-class UserCreate(BaseModel):
-    username: str
-    email: EmailStr
-    password: str
-
-
 class UserModel(DataBase):
+    id: UUID4
     username: str
     email: EmailStr
 
     @classmethod
-    async def create_user(cls, username: str, email: str, password: str):
+    async def get_user(cls, username: str) -> dict:
         query = """
-            INSERT INTO users (username, email, password)
-            VALUES ($1, $2, $3);
+            SELECT id, username, email, password
+              FROM users
+            WHERE username = $1;
         """
-        return await cls.execute(query, username, email, get_password_hash(password))
+        user = await cls.fetchrow(query, username)
+        return dict(user) if user else None

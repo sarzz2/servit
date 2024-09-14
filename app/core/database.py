@@ -4,10 +4,9 @@ from typing import ClassVar, List, Type, TypeVar, Union
 
 from asyncpg import Connection, Pool, Record, connect, create_pool
 from pydantic import BaseModel
-import logging
 
 BM = TypeVar("BM", bound="Model")
-log = logging.getLogger('fastapi')
+log = logging.getLogger("fastapi")
 
 
 class CustomRecord(Record):
@@ -64,11 +63,11 @@ class DataBase(BaseModel):
 
     @classmethod
     async def fetchrow(
-            cls: Type[BM],
-            query,
-            *args,
-            con: Union[Connection, Pool] = None,
-            convert: bool = True,
+        cls: Type[BM],
+        query,
+        *args,
+        con: Union[Connection, Pool] = None,
+        convert: bool = True,
     ) -> Union[BM, Record, None]:
         con = con or cls.pool
         async with con.acquire() as connection:
@@ -78,17 +77,13 @@ class DataBase(BaseModel):
             return cls(**record)
 
     @classmethod
-    async def fetchval(
-        cls, query, *args, con: Union[Connection, Pool] = None, column: int = 0
-    ):
+    async def fetchval(cls, query, *args, con: Union[Connection, Pool] = None, column: int = 0):
         if con is None:
             con = cls.pool
         return await con.fetchval(query, *args, column=column)
 
     @classmethod
-    async def execute(
-        cls, query: str, *args, con: Union[Connection, Pool] = None
-    ) -> str:
+    async def execute(cls, query: str, *args, con: Union[Connection, Pool] = None) -> str:
         if con is None:
             con = cls.pool
         return await con.execute(query, *args)

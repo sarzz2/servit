@@ -1,12 +1,13 @@
+import logging
+
 import asyncpg
 from fastapi import APIRouter, Depends, HTTPException
+from starlette import status
 
 from app.core.auth import create_access_token
 from app.core.dependencies import get_current_user
-from app.models.user import UserCreate, UserLogin, UserModel
+from app.models.user import UserIn, UserLogin, UserModel
 from app.services.v0.user_service import authenticate_user, register_user
-import logging
-import time
 
 log = logging.getLogger("fastapi")
 
@@ -14,8 +15,8 @@ router = APIRouter()
 protected_router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
-@router.post("/register")
-async def register(user: UserCreate):
+@router.post("/register", status_code=status.HTTP_201_CREATED)
+async def register(user: UserIn):
     """
     Register a new user
     """
@@ -23,7 +24,7 @@ async def register(user: UserCreate):
         await register_user(user.username, user.email, user.password)
     except asyncpg.UniqueViolationError as e:
         return {"message": e.detail}
-    access_token = create_access_token(data={"sub": user.username})
+    access_token = create_access_token(data={"sub": user.id})
     return {"access_token": access_token}
 
 

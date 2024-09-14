@@ -1,10 +1,11 @@
-import logging
-from logging.handlers import SocketHandler
-import colorlog
 import json
+import logging
 import sys
+from logging.handlers import SocketHandler
 
-LOGSTASH_HOST = 'localhost'
+import colorlog
+
+LOGSTASH_HOST = "localhost"
 LOGSTASH_PORT = 5000
 
 
@@ -25,20 +26,20 @@ class LogstashFormatter(logging.Formatter):
 
 
 def configure_logging():
-    logger = logging.getLogger('fastapi')
-    logger.setLevel(logging.INFO)
+    logger = logging.getLogger("fastapi")
+    logger.setLevel(logging.DEBUG)
 
     # Configure colorlog for console output
     console_handler = logging.StreamHandler(sys.stdout)
     console_formatter = colorlog.ColoredFormatter(
         "%(log_color)s%(levelname)s:     %(message)s",
         log_colors={
-            'DEBUG': 'bold_blue',
-            'INFO': 'bold_green',
-            'WARNING': 'bold_yellow',
-            'ERROR': 'bold_red',
-            'CRITICAL': 'bold_purple',
-        }
+            "DEBUG": "bold_blue",
+            "INFO": "bold_green",
+            "WARNING": "bold_yellow",
+            "ERROR": "bold_red",
+            "CRITICAL": "bold_purple",
+        },
     )
     console_handler.setFormatter(console_formatter)
     logger.addHandler(console_handler)

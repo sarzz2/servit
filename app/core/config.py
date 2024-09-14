@@ -9,6 +9,13 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 3000
     DATABASE_URL: str
+    TEST_DATABASE_URL: str
+    # default values for localstack
+    S3_ENDPOINT_URL: str = "http://localhost:4566"
+    S3_REGION_NAME: str = "us-east-1"
+    AWS_ACCESS_KEY: str = "test"
+    AWS_SECRET_ACCESS_KEY: str = "test"
+    AWS_BUCKET_NAME: str = "my-bucket"
 
     class Config:
         env_file = ".env"

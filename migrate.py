@@ -30,9 +30,7 @@ async def get_applied_migrations(pool) -> List[str]:
     Fetch the list of applied migrations from the schema_migrations table.
     """
     async with pool.acquire() as connection:
-        rows = await connection.fetch(
-            "SELECT version FROM schema_migrations ORDER BY version;"
-        )
+        rows = await connection.fetch("SELECT version FROM schema_migrations ORDER BY version;")
     return [row["version"] for row in rows]
 
 
@@ -41,9 +39,7 @@ async def record_migration(pool, version: str):
     Record a migration as applied in the schema_migrations table.
     """
     async with pool.acquire() as connection:
-        await connection.execute(
-            "INSERT INTO schema_migrations (version) VALUES ($1);", version
-        )
+        await connection.execute("INSERT INTO schema_migrations (version) VALUES ($1);", version)
 
 
 async def remove_migration_record(pool, version: str):
@@ -51,9 +47,7 @@ async def remove_migration_record(pool, version: str):
     Remove a migration record from the schema_migrations table.
     """
     async with pool.acquire() as connection:
-        await connection.execute(
-            "DELETE FROM schema_migrations WHERE version = $1;", version
-        )
+        await connection.execute("DELETE FROM schema_migrations WHERE version = $1;", version)
 
 
 async def run_migration(pool, filename: str, direction: str):
@@ -88,31 +82,20 @@ async def apply_migrations(pool, direction: str = "up", steps: int = None):
 
     if direction == "down":
         files = reversed(files)
-    migrations_to_apply = []
 
     if steps is None:
         # Apply all pending migrations
         migrations_to_apply = [
             f
             for f in files
-            if f.endswith(".sql")
-            and (
-                f not in applied_migrations
-                if direction == "up"
-                else f in applied_migrations
-            )
+            if f.endswith(".sql") and (f not in applied_migrations if direction == "up" else f in applied_migrations)
         ]
     else:
         # Apply a specific number of steps
         migrations_to_apply = [
             f
             for f in files
-            if f.endswith(".sql")
-            and (
-                f not in applied_migrations
-                if direction == "up"
-                else f in applied_migrations
-            )
+            if f.endswith(".sql") and (f not in applied_migrations if direction == "up" else f in applied_migrations)
         ][:steps]
 
     for filename in migrations_to_apply:
@@ -145,9 +128,7 @@ async def run_specific_migration(pool, migration_name: str, direction: str = "up
     elif direction == "down":
         applied_migrations = await get_applied_migrations(pool)
         if migration_name not in applied_migrations:
-            print(
-                f"Migration {migration_name} is not applied and cannot be rolled back."
-            )
+            print(f"Migration {migration_name} is not applied and cannot be rolled back.")
             return
         await run_migration(pool, migration_path, "down")
         await remove_migration_record(pool, migration_name)
@@ -169,9 +150,7 @@ async def main():
         default=None,
         help="Number of steps to migrate up or down.",
     )
-    parser.add_argument(
-        "--specific", "-s", type=str, help="Run a specific migration file."
-    )
+    parser.add_argument("--specific", "-s", type=str, help="Run a specific migration file.")
 
     args = parser.parse_args()
 
