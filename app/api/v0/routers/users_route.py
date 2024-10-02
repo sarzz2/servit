@@ -24,7 +24,7 @@ async def register(user: UserIn):
         await register_user(user.username, user.email, user.password)
     except asyncpg.UniqueViolationError as e:
         return {"message": e.detail}
-    access_token = create_access_token(data={"sub": user.id})
+    access_token = create_access_token(data={"sub": user.username})
     return {"access_token": access_token}
 
 

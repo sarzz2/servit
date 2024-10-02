@@ -12,6 +12,7 @@ class UserIn(DataBase):
     username: str = Field(..., min_length=3, max_length=50)
     email: EmailStr = Field(...)
     password: str = Field(..., min_length=8)
+    profile_picture_url: Optional[str] = Field(default=None)
 
     @classmethod
     async def create_user(cls, username: str, email: str, password: str):
@@ -41,11 +42,12 @@ class UserModel(DataBase):
     id: UUID4
     username: str
     email: EmailStr
+    profile_picture_url: Optional[str]
 
     @classmethod
     async def get_user(cls, username: str) -> dict:
         query = """
-            SELECT id, username, email, password
+            SELECT id, username, email, password, profile_picture_url
               FROM users
             WHERE username = $1;
         """
