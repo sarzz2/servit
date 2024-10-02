@@ -1,20 +1,19 @@
 import traceback
+import uuid
 from contextlib import asynccontextmanager
+from mimetypes import guess_type
 
-from fastapi import FastAPI
+from botocore.exceptions import NoCredentialsError, PartialCredentialsError
+from fastapi import FastAPI, File, Request, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, StreamingResponse
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
 from app.api.v0.api import api_router
+from app.core.aws_localstack import s3_client
 from app.core.config import settings
 from app.core.database import DataBase
 from app.core.logging_config import configure_logging
-from app.core.aws_localstack import s3_client
-
-from botocore.exceptions import NoCredentialsError, PartialCredentialsError
-from fastapi import UploadFile, File, Request
-from fastapi.responses import StreamingResponse, JSONResponse
-from mimetypes import guess_type
-import uuid
 
 logger = configure_logging()
 
@@ -32,6 +31,15 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title=settings.PROJECT_NAME, version=settings.PROJECT_VERSION, lifespan=lifespan)
 
 app.include_router(api_router, prefix=settings.API_V0_STR)
+
+origins = [
+    "http://localhost:3000",
+]
+
+# Add CORS middleware to the FastAPI application
+app.add_middleware(
+    CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
+)
 
 
 # Exception handler for unhandled errors

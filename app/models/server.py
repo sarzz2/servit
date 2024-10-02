@@ -28,14 +28,42 @@ class ServerIn(DataBase):
         while True:
             try:
                 query = """
-                              WITH inserted_server AS (
-                       INSERT INTO servers (name, description, owner_id, invite_code, is_public)
-                            VALUES ($1, $2, $3, $4, $5)
-                         RETURNING id)
-                       INSERT INTO server_members (server_id, user_id, nickname)
-                            SELECT inserted_server.id, $3, NULL
-                              FROM inserted_server;
-                       """
+                            WITH inserted_server AS (
+                     INSERT INTO servers (name, description, owner_id, invite_code, is_public)
+                          VALUES ($1, $2, $3, $4, $5)
+                       RETURNING id),
+              inserted_member AS (
+                     INSERT INTO server_members (server_id, user_id, nickname)
+                          VALUES ((SELECT id FROM inserted_server), $3, null)
+                       RETURNING server_id),
+                inserted_role AS (
+                     INSERT INTO server_roles (server_id, name, description, color)
+                          VALUES (
+                                    (SELECT server_id FROM inserted_member),
+                                    '@everyone',
+                                    'Default role for all members',
+                                    '#000000'
+                                 )
+                       RETURNING id),
+          default_permissions AS (
+                          SELECT id FROM server_permissions
+                           WHERE name IN (
+                                            'VIEW_CHANNEL',
+                                            'SEND_MESSAGES',
+                                            'READ_MESSAGE_HISTORY',
+                                            'SPEAK',
+                                            'CHANGE_NICKNAME'
+                                         )
+                                 ),
+    inserted_server_role_perm AS (
+                     INSERT INTO server_role_permissions (role_id, permission_id)
+                          SELECT (SELECT id FROM inserted_role), id
+                            FROM default_permissions
+                       RETURNING role_id
+                                )
+			         INSERT INTO server_user_roles (user_id, role_id)
+			              VALUES ($3, (SELECT id FROM inserted_role));
+                    """
                 # Try executing the insert query with the generated invite code
                 return await cls.execute(query, name, description, owner_id, invite_code, is_public)
             except asyncpg.UniqueViolationError as e:
@@ -64,12 +92,21 @@ class ServerOut(DataBase):
         return await cls.fetchrow(query, invite_code)
 
     @classmethod
-    async def get_server_by_name(cls, name: str):
+    async def get_server_by_id(cls, id: str):
         query = """
                 SELECT * FROM servers
-                WHERE name = $1
+                 WHERE id = $1
             """
-        return await cls.fetchrow(query, name)
+        return await cls.fetchrow(query, id)
+
+    @classmethod
+    async def get_all_user_servers(cls, user_id):
+        query = """
+                SELECT * FROM servers s
+                JOIN server_members sm ON s.id = sm.server_id
+                WHERE sm.user_id = $1
+            """
+        return await cls.fetch(query, user_id)
 
 
 class ServerUpdate(DataBase):

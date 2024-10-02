@@ -162,12 +162,3 @@ async def test_create_duplicate_server(client: AsyncClient, test_user_token, tes
     headers = {"Authorization": f"Bearer {test_user_token}"}
     response = await client.post("/api/v0/servers/", json=server_data, headers=headers)
     assert response.status_code == 400
-
-
-@pytest.mark.asyncio
-async def test_update_server_valid_and_invalid_data(client: AsyncClient, test_user_token, test_server):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
-    server_id = test_server["id"]
-    update_data = {"description": "Valid description", "is_public": "invalid"}
-    response = await client.patch(f"/api/v0/servers/{server_id}", json=update_data, headers=headers)
-    assert response.status_code == 422

@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(255) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
+    profile_picture_url VARCHAR(255),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -42,7 +43,7 @@ CREATE TABLE IF NOT EXISTS server_roles (
     name VARCHAR(255) NOT NULL,
     description TEXT,
     hierarchy INTEGER DEFAULT 0,
-    color VARCHAR(7) DEFAULT '#000000',
+    color VARCHAR(7) DEFAULT '#ffffff',
     display_order INTEGER DEFAULT 0,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
@@ -53,14 +54,36 @@ CREATE TABLE IF NOT EXISTS server_roles (
 -- Create Server_Permissions Table
 CREATE TABLE IF NOT EXISTS server_permissions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    server_id UUID NOT NULL,
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) UNIQUE NOT NULL,
     description TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE,
-    UNIQUE (server_id, name)
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Insert permissions into server_permissions table
+INSERT INTO server_permissions (name)
+VALUES
+    ('VIEW_CHANNEL'),
+    ('SEND_MESSAGES'),
+    ('MANAGE_MESSAGES'),
+    ('MANAGE_CHANNELS'),
+    ('READ_MESSAGE_HISTORY'),
+    ('MENTION_EVERYONE'),
+    ('USE_EXTERNAL_EMOJIS'),
+    ('CONNECT'),
+    ('SPEAK'),
+    ('STREAM'),
+    ('MUTE_MEMBERS'),
+    ('DEAFEN_MEMBERS'),
+    ('MOVE_MEMBERS'),
+    ('MANAGE_ROLES'),
+    ('ADMINISTRATOR'),
+    ('MANAGE_NICKNAMES'),
+    ('CHANGE_NICKNAME'),
+    ('KICK_MEMBERS'),
+    ('BAN_MEMBERS'),
+    ('MANAGE_SERVER');
+
 
 -- Create Server_Role_Permissions Table to link roles and permissions within a server
 CREATE TABLE IF NOT EXISTS server_role_permissions (
@@ -104,7 +127,7 @@ CREATE TABLE IF NOT EXISTS server_user_permissions (
 
 -- Create Categories Table
 CREATE TABLE categories (
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     server_id UUID REFERENCES servers(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     position INTEGER NOT NULL,
