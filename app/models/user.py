@@ -24,13 +24,14 @@ class UserIn(DataBase):
 
 
 class UserLogin(DataBase):
+    id: Optional[UUID4] = None
     username: str
     password: str
 
     @classmethod
     async def get_user_by_username(cls, username: str) -> dict:
         query = """
-            SELECT username, email, password
+            SELECT id, username, email, password
             FROM users
             WHERE username = $1;
         """
