@@ -61,8 +61,8 @@ class ServerIn(DataBase):
                             FROM default_permissions
                        RETURNING role_id
                                 )
-			         INSERT INTO server_user_roles (user_id, role_id)
-			              VALUES ($3, (SELECT id FROM inserted_role));
+                          INSERT INTO server_user_roles (user_id, role_id)
+                          VALUES ($3, (SELECT id FROM inserted_role));
                     """
                 # Try executing the insert query with the generated invite code
                 return await cls.execute(query, name, description, owner_id, invite_code, is_public)

@@ -1,9 +1,8 @@
-from app.core.database import DataBase
 from functools import wraps
-from fastapi import HTTPException, Depends
 
-from app.core.dependencies import get_current_user
-from app.models.user import UserModel
+from fastapi import HTTPException
+
+from app.core.database import DataBase
 
 
 class PermissionService:
@@ -34,8 +33,8 @@ def check_permissions(required_permissions: list[str]):
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
-            server_id = kwargs.get('server_id')
-            current_user = kwargs.get('current_user')
+            server_id = kwargs.get("server_id")
+            current_user = kwargs.get("current_user")
 
             # Ensure required permissions are checked
             if not await PermissionService.has_permission(current_user["id"], server_id, required_permissions):
@@ -45,4 +44,5 @@ def check_permissions(required_permissions: list[str]):
             return await func(*args, **kwargs)
 
         return wrapper
+
     return decorator

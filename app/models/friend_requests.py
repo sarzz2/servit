@@ -1,8 +1,7 @@
-from uuid import UUID
-from pydantic import BaseModel
-from app.core.database import DataBase
 from typing import Optional
-from datetime import datetime
+from uuid import UUID
+
+from app.core.database import DataBase
 
 
 class FriendRequest(DataBase):
@@ -35,7 +34,7 @@ class FriendRequest(DataBase):
     @classmethod
     async def get_friends(cls, user_id: UUID):
         query = """
-            SELECT 
+            SELECT
               CASE WHEN friends.user_id = $1
                    THEN u2.username
                    ELSE u1.username

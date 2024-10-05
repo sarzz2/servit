@@ -99,7 +99,9 @@ async def leave_from_server(server_id: str, current_user: UserModel = Depends(ge
 
 @router.patch("/{server_id}", status_code=status.HTTP_200_OK)
 @check_permissions(["MANAGE_SERVER", "ADMINISTRATOR"])
-async def update_server_by_id(server_id: str, request: Request, server: ServerUpdate, current_user: UserModel = Depends(get_current_user)):
+async def update_server_by_id(
+    server_id: str, request: Request, server: ServerUpdate, current_user: UserModel = Depends(get_current_user)
+):
     """Update server details"""
     update_data = await request.json()
     response = await update_server(server_id, **update_data)

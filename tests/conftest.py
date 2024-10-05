@@ -72,7 +72,6 @@ async def test_server(test_user_token):
         assert response.status_code == 201
 
         # Check the response JSON
-        response_data = response.json()
         server_data = await client.get("/api/v0/servers/user_servers", headers=headers)
         return server_data.json()["servers"][0]
 
