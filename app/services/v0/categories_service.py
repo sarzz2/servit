@@ -17,3 +17,7 @@ async def get_categories(server_id):
 
 async def update_categories(category_id, name=None, position=None):
     return await CategoriesUpdate.update_category(category_id, name, position)
+
+
+async def del_category(server_id, category_id):
+    return await CategoriesUpdate.delete_category(server_id, category_id)

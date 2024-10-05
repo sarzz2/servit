@@ -60,3 +60,8 @@ class CategoriesUpdate(DataBase):
         print(values)
 
         return await cls.fetch(query, *values)
+
+    @classmethod
+    async def delete_category(cls, server_id: str, category_id: str):
+        query = "DELETE FROM categories WHERE server_id = $1 AND id = $2"
+        return await cls.execute(query, server_id, category_id)
