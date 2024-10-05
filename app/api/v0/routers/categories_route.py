@@ -54,6 +54,11 @@ async def update_category(
         current_user: UserModel = Depends(get_current_user)
 ):
     result = await update_categories(category_id, name=category.name, position=category.position)
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Category not found",
+        )
     return result
 
 

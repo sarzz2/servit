@@ -57,9 +57,8 @@ class CategoriesUpdate(DataBase):
         # Finalize the query
         query = base_query + ", ".join(update_fields) + " WHERE id = $" + (str(len(values) + 1) + " RETURNING *")
         values.append(category_id)
-        print(values)
 
-        return await cls.fetch(query, *values)
+        return await cls.fetchrow(query, *values)
 
     @classmethod
     async def delete_category(cls, server_id: str, category_id: str):
