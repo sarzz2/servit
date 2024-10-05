@@ -7,6 +7,7 @@ from starlette import status
 from app.core.dependencies import get_current_user
 from app.models.server import ServerIn, ServerUpdate
 from app.models.user import UserModel
+from app.services.v0.permission_service import check_permissions
 from app.services.v0.server_service import (
     create_server,
     get_all_user_servers,
@@ -97,7 +98,8 @@ async def leave_from_server(server_id: str, current_user: UserModel = Depends(ge
 
 
 @router.patch("/{server_id}", status_code=status.HTTP_200_OK)
-async def update_server_by_id(server_id: str, request: Request, server: ServerUpdate):
+@check_permissions(["MANAGE_SERVER", "ADMINISTRATOR"])
+async def update_server_by_id(server_id: str, request: Request, server: ServerUpdate, current_user: UserModel = Depends(get_current_user)):
     """Update server details"""
     update_data = await request.json()
     response = await update_server(server_id, **update_data)

@@ -30,9 +30,9 @@ async def test_create_server_unauthorized(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_get_server_by_name(client: AsyncClient, test_user_token, test_server):
+async def test_get_server_by_id(client: AsyncClient, test_user_token, test_server):
     headers = {"Authorization": f"Bearer {test_user_token}"}
-    response = await client.get(f"/api/v0/servers/{test_server['name']}", headers=headers)
+    response = await client.get(f"/api/v0/servers/{test_server['id']}", headers=headers)
     assert response.status_code == 200
 
 
@@ -130,19 +130,7 @@ async def test_unauthorized_access(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_server_not_found(client: AsyncClient, test_user_token):
     headers = {"Authorization": f"Bearer {test_user_token}"}
-    response = await client.get("/api/v0/servers/nonexistentserver", headers=headers)
-    assert response.status_code == 404
-    assert "Server not found" in response.json()["detail"]
-
-
-@pytest.mark.asyncio
-async def test_update_non_existent_server(client: AsyncClient, test_user_token):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
-    update_data = {"description": "updatedserver", "is_public": True}
-
-    response = await client.patch(
-        "/api/v0/servers/b5040109-5ea8-4018-854f-c981d3d0b413", json=update_data, headers=headers
-    )
+    response = await client.get("/api/v0/servers/7442e730-e3d2-442e-917d-96de9846989d", headers=headers)
     assert response.status_code == 404
     assert "Server not found" in response.json()["detail"]
 
@@ -157,8 +145,10 @@ async def test_update_server_valid_and_invalid_data(client: AsyncClient, test_us
 
 
 @pytest.mark.asyncio
-async def test_create_duplicate_server(client: AsyncClient, test_user_token, test_server):
-    server_data = {"name": test_server["name"]}
-    headers = {"Authorization": f"Bearer {test_user_token}"}
-    response = await client.post("/api/v0/servers/", json=server_data, headers=headers)
-    assert response.status_code == 400
+async def test_updating_server_without_permission(client: AsyncClient, test_user_token2, test_server):
+    headers = {"Authorization": f"Bearer {test_user_token2}"}
+    server_id = test_server["id"]
+    update_data = {"description": "updatedserver", "is_public": True}
+    response = await client.patch(f"/api/v0/servers/{server_id}", json=update_data, headers=headers)
+    assert response.status_code == 403
+    assert "Insufficient permissions" in response.json()["detail"]

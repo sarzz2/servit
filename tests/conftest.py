@@ -4,7 +4,7 @@ from httpx import AsyncClient
 from app.core.config import settings
 from app.core.database import DataBase
 from app.main import app
-from migrate import apply_migrations
+from migrate import apply_migrations, create_migrations_table
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -12,6 +12,7 @@ async def setup_database():
     # Initialize the database connection pool asynchronously
     database_instance = DataBase()
     await database_instance.create_pool(uri=settings.TEST_DATABASE_URL)
+    await create_migrations_table(database_instance.pool)
     await apply_migrations(database_instance.pool)
     print("Database connected successfully")
 
@@ -72,8 +73,8 @@ async def test_server(test_user_token):
 
         # Check the response JSON
         response_data = response.json()
-        server_data = await client.get(f"/api/v0/servers/{response_data['server']['name']}", headers=headers)
-        return server_data.json()["server"]
+        server_data = await client.get("/api/v0/servers/user_servers", headers=headers)
+        return server_data.json()["servers"][0]
 
 
 @pytest.fixture(scope="function")

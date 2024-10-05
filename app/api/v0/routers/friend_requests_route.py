@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 
 from app.models.friend_requests import FriendRequest
-from app.services.friend_requests_service import FriendService
+from app.services.v0.friend_requests_service import FriendService
 from uuid import UUID
 from app.models.user import UserModel
 from app.core.dependencies import get_current_user

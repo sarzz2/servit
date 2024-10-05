@@ -35,5 +35,6 @@ EXECUTE FUNCTION update_timestamp();
 
 -- down
 DROP TABLE IF EXISTS friends CASCADE;
+DROP TYPE IF EXISTS friend_status;
 DROP FUNCTION IF EXISTS update_timestamp;
 
