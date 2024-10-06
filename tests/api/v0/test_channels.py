@@ -12,11 +12,13 @@ async def test_channel(test_user_token, test_server, test_category):
         headers = {"Authorization": f"Bearer {test_user_token}"}
 
         # Make a POST request to create a channel
-        await client.post(f"/api/v0/channels/{test_server['id']}/{test_category['id']}", json=channel_data,
-                          headers=headers)
+        await client.post(
+            f"/api/v0/channels/{test_server['id']}/{test_category['id']}", json=channel_data, headers=headers
+        )
 
-        channel_response = await client.get(f"/api/v0/channels/{test_server['id']}/{test_category['id']}",
-                                            headers=headers)
+        channel_response = await client.get(
+            f"/api/v0/channels/{test_server['id']}/{test_category['id']}", headers=headers
+        )
         return channel_response.json()[0]
 
 
@@ -27,8 +29,9 @@ async def test_create_channel(client: AsyncClient, test_user_token, test_server,
     headers = {"Authorization": f"Bearer {test_user_token}"}
 
     # Make a POST request to create a channel
-    response = await client.post(f"/api/v0/channels/{test_server['id']}/{test_category['id']}", json
-    =channel_data, headers=headers)
+    response = await client.post(
+        f"/api/v0/channels/{test_server['id']}/{test_category['id']}", json=channel_data, headers=headers
+    )
 
     # Check the status code
     assert response.status_code == 201
@@ -66,8 +69,9 @@ async def test_update_channel(client: AsyncClient, test_user_token, test_server,
     headers = {"Authorization": f"Bearer {test_user_token}"}
 
     # Make a PATCH request to update a channel
-    response = await client.patch(f"/api/v0/channels/{test_server['id']}/{test_channel['id']}", json=channel_data,
-                                  headers=headers)
+    response = await client.patch(
+        f"/api/v0/channels/{test_server['id']}/{test_channel['id']}", json=channel_data, headers=headers
+    )
     assert response.status_code == 200
 
     # Check the response JSON
@@ -104,6 +108,7 @@ async def test_create_channel_without_permission(client: AsyncClient, test_user_
     channel_data = {"name": "testchannel", "description": "test description"}
     headers = {"Authorization": f"Bearer {test_user_token2}"}
 
-    response = await client.post(f"/api/v0/channels/{test_server['id']}/{test_category['id']}", json=channel_data,
-                                 headers=headers)
+    response = await client.post(
+        f"/api/v0/channels/{test_server['id']}/{test_category['id']}", json=channel_data, headers=headers
+    )
     assert response.status_code == 403

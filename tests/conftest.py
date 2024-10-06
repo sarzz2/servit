@@ -64,6 +64,7 @@ async def test_category(test_user_token, test_server):
         category_response = await client.get(f"/api/v0/category/{test_server['id']}", headers=headers)
         return category_response.json()[0]
 
+
 async def test_user_data(user_data, client):
     # Check if the user already exists, if not, create it
     register_response = await client.post("/api/v0/users/register", json=user_data)
