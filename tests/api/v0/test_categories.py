@@ -4,20 +4,6 @@ from httpx import AsyncClient
 from app.main import app
 
 
-@pytest.fixture(scope="function")
-async def test_category(test_user_token, test_server):
-    async with AsyncClient(app=app, base_url="http://test") as client:
-        # Define category data for creation
-        category_data = {"name": "testcategory"}
-        headers = {"Authorization": f"Bearer {test_user_token}"}
-
-        # Make a POST request to create a category
-        await client.post(f"/api/v0/category/{test_server['id']}", json=category_data, headers=headers)
-
-        category_response = await client.get(f"/api/v0/category/{test_server['id']}", headers=headers)
-        return category_response.json()[0]
-
-
 @pytest.mark.asyncio
 async def test_create_category(client: AsyncClient, test_user_token, test_server):
     # Define category data for creation

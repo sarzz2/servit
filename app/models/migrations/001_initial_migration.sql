@@ -140,18 +140,20 @@ CREATE TABLE categories (
 CREATE TABLE IF NOT EXISTS channels (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     server_id UUID NOT NULL,
+    category_id UUID NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    type VARCHAR(50) NOT NULL,
-    position INTEGER DEFAULT 0,
+    type VARCHAR(50) NOT NULL DEFAULT 'text',
+    position INTEGER NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE,
     FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE
 );
 
 -- down
-DROP TABLE IF EXISTS categories;
 DROP TABLE IF EXISTS channels;
+DROP TABLE IF EXISTS categories;
 DROP TABLE IF EXISTS server_user_permissions;
 DROP TABLE IF EXISTS server_denied_permissions;
 DROP TABLE IF EXISTS server_user_roles;
