@@ -29,35 +29,44 @@ async def setup_database():
 async def test_user_token():
     async with AsyncClient(app=app, base_url="http://test") as client:
         user_data = {"username": "testuser", "password": "testpassword", "email": "test@test.com"}
-        token = await user_token(user_data, client)
-        return token
+        token = await test_user_data(user_data, client)
+        return token["access_token"]
 
 
 @pytest.fixture(scope="function")
 async def test_user_token2():
     async with AsyncClient(app=app, base_url="http://test") as client:
         user_data = {"username": "testuser2", "password": "testpassword", "email": "test2@test.com"}
-        token = await user_token(user_data, client)
-        return token
+        token = await test_user_data(user_data, client)
+        return token["access_token"]
 
 
-async def user_token(user_data, client):
+@pytest.fixture()
+async def test_user():
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        user_data = {"username": "testuser", "password": "testpassword", "email": "test@test.com"}
+        user_data = await test_user_data(user_data, client)
+        headers = {"Authorization": f"Bearer {user_data['access_token']}"}
+        response = await client.get("/api/v0/users/me", headers=headers)
+        return response.json()
+
+
+async def test_user_data(user_data, client):
     # Check if the user already exists, if not, create it
     register_response = await client.post("/api/v0/users/register", json=user_data)
-    print(register_response)
     if register_response.status_code != 201:
         # If the user exists, log in instead
         login_response = await client.post("/api/v0/users/login", json=user_data)
         assert login_response.status_code == 200
-        token = login_response.json()["access_token"]
+        user_data = login_response.json()
     else:
         # If user registration was successful, log in the newly created user
         login_response = await client.post("/api/v0/users/login", json=user_data)
         assert login_response.status_code == 200
-        token = login_response.json()["access_token"]
+        user_data = login_response.json()
 
     # Return the access token to be used in tests
-    return token
+    return user_data
 
 
 @pytest.fixture(scope="function")

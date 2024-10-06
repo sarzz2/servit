@@ -8,7 +8,7 @@ class FriendRequest(DataBase):
     user_id: UUID
     friend_id: UUID
     status: str
-    profile_picture_url: str
+    profile_picture_url: Optional[str] = None
     username: Optional[str] = None
     email: Optional[str] = None
 
@@ -58,7 +58,7 @@ class FriendRequest(DataBase):
     @classmethod
     async def get_friend_requests(cls, user_id: UUID):
         query = """
-            SELECT user_id, friend_id, status, username, email FROM friends
+            SELECT user_id, friend_id, status, username, email, profile_picture_url FROM friends
               JOIN users ON friends.user_id = users.id
              WHERE friend_id = $1 AND status = 'pending';
         """
@@ -68,7 +68,7 @@ class FriendRequest(DataBase):
     async def remove_friend(cls, user_id: UUID, friend_id: UUID):
         query = """
             DELETE FROM friends
-            WHERE user_id = $1 AND friend_id = $2
+            WHERE user_id = $1 AND friend_id = $2 OR user_id = $2 AND friend_id = $1
             RETURNING *;
         """
         return await cls.fetchrow(query, user_id, friend_id)
