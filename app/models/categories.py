@@ -34,7 +34,7 @@ class CategoriesOut(DataBase):
 
 
 class CategoriesUpdate(DataBase):
-    name: Optional[str] = Field(None, description="Name of the category")
+    name: constr(min_length=3, max_length=255) = Field(None, description="Name of the category")
     position: Optional[int] = Field(None, description="Position of the category")
 
     @classmethod

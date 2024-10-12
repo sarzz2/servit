@@ -108,17 +108,6 @@ async def test_update_server_invalid_data(client: AsyncClient, test_user_token, 
 
 
 @pytest.mark.asyncio
-async def test_create_server_with_duplicate_name(client: AsyncClient, test_user_token, test_server):
-    # Try creating a server with the same name as an existing server
-    server_data = {"name": test_server["name"]}
-    headers = {"Authorization": f"Bearer {test_user_token}"}
-
-    response = await client.post("/api/v0/servers/", json=server_data, headers=headers)
-    assert response.status_code == 400
-    assert "Server creation failed" in response.json()["detail"]
-
-
-@pytest.mark.asyncio
 async def test_unauthorized_access(client: AsyncClient):
     # Try accessing the create server endpoint without providing an authorization token
     server_data = {"name": "unauthorizedtestserver"}

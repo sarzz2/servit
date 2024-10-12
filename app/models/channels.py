@@ -1,7 +1,7 @@
 from typing import Optional
 from uuid import UUID
 
-from pydantic import Field, constr, computed_field
+from pydantic import Field, constr
 
 from app.core.database import DataBase
 
@@ -48,8 +48,8 @@ class ChannelOut(DataBase):
 
 
 class ChannelUpdate(DataBase):
-    name: Optional[str] = Field(None, description="Channel name")
-    description: Optional[str] = Field(None, description="Channel description")
+    name: constr(min_length=3, max_length=100) = Field(None, description="Channel name")
+    description: constr(min_length=3, max_length=100) = Field(None, description="Channel description")
     position: Optional[int] = Field(None, description="Channel position")
 
     @classmethod

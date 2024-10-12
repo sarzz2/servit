@@ -2,11 +2,11 @@ from fastapi import APIRouter
 
 from .routers import (
     categories_route,
+    channels_route,
     friend_requests_route,
     server_roles_route,
     servers_route,
     users_route,
-    channels_route,
 )
 
 api_router = APIRouter()

@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     profile_picture_url VARCHAR(255),
+    deleted_at TIMESTAMPTZ NULL DEFAULT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -14,11 +15,12 @@ CREATE TABLE IF NOT EXISTS users (
 -- Create Servers Table
 CREATE TABLE IF NOT EXISTS servers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(255) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
     description TEXT,
     owner_id UUID NOT NULL,
     invite_code VARCHAR(20) UNIQUE NOT NULL,
     is_public BOOLEAN DEFAULT FALSE,
+    server_picture_url VARCHAR(255),
     max_members INTEGER DEFAULT 10000,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
@@ -32,6 +34,7 @@ CREATE TABLE IF NOT EXISTS server_members (
     nickname VARCHAR(255),
     joined_at TIMESTAMPTZ DEFAULT NOW(),
     PRIMARY KEY (user_id, server_id),
+    deleted_at TIMESTAMPTZ NULL DEFAULT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE
 );

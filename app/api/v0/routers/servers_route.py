@@ -1,6 +1,5 @@
 import logging
 
-import asyncpg
 from fastapi import APIRouter, Depends, HTTPException, Request
 from starlette import status
 
@@ -28,14 +27,7 @@ async def create_new_server(
     current_user: UserModel = Depends(get_current_user),
 ):
     """Create a new server"""
-    try:
-        await create_server(current_user, **server.model_dump())
-    except asyncpg.UniqueViolationError as e:
-        log.error(f"Server creation failed: {e.detail}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Server creation failed: {e.detail}",
-        )
+    await create_server(current_user, **server.model_dump())
 
     log.info(
         f"Server created successfully: {server.name} by Username:{current_user['username']} & Id {current_user['id']}"
@@ -60,7 +52,7 @@ async def get_server_roles_permissions(server_id: str, current_user: UserModel =
 
 
 @router.get("/{server_id}", status_code=status.HTTP_200_OK)
-async def get_server_by_name(server_id: str):
+async def get_server_by_id(server_id: str):
     """Get server details by ID"""
     # Fetch server details by ID
     server = await get_server_details_by_id(server_id)
@@ -75,18 +67,17 @@ async def get_server_by_name(server_id: str):
 @router.post("/join/{invite_link}", status_code=status.HTTP_200_OK)
 async def join_server_via_link(invite_link: str, current_user: UserModel = Depends(get_current_user)):
     """Join a server using an invitation link"""
-    try:
-        response = await join_server(invite_link, current_user)
-    except asyncpg.UniqueViolationError:
-        raise HTTPException(status_code=status.HTTP_302_FOUND, detail="User has already joined server")
+    response = await join_server(invite_link, current_user)
     if response is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Invalid invite code",
         )
+    elif response and response[1] == "INSERT 0 0":
+        raise HTTPException(status_code=status.HTTP_302_FOUND, detail="User has already joined the server")
     return {
         "message": "Successfully joined server:",
-        "server_details": response.model_dump(),
+        "server_details": response[0].model_dump(),
     }
 
 

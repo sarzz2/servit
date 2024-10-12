@@ -1,13 +1,12 @@
-import traceback
 import uuid
 from contextlib import asynccontextmanager
 from mimetypes import guess_type
 
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
-from fastapi import FastAPI, File, Request, UploadFile
+from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
-from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
+from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import StreamingResponse, ORJSONResponse
 
 from app.api.v0.api import api_router
 from app.core.aws_localstack import s3_client
@@ -28,7 +27,12 @@ async def lifespan(app: FastAPI):
     logger.info("Database disconnected successfully")
 
 
-app = FastAPI(title=settings.PROJECT_NAME, version=settings.PROJECT_VERSION, lifespan=lifespan)
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    version=settings.PROJECT_VERSION,
+    lifespan=lifespan,
+    default_response_class=ORJSONResponse,
+)
 
 app.include_router(api_router, prefix=settings.API_V0_STR)
 
@@ -40,16 +44,7 @@ origins = [
 app.add_middleware(
     CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
 )
-
-
-# Exception handler for unhandled errors
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Unhandled error: {str(exc)}\n{traceback.format_exc()}")
-    return JSONResponse(
-        status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"detail": "An unexpected error occurred. Please try again later."},
-    )
+app.add_middleware(GZipMiddleware, minimum_size=1500)
 
 
 # S3 endpoints for file upload, view and delete

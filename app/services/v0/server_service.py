@@ -32,8 +32,7 @@ async def join_server(invite_link: str, current_user):
     server = await ServerOut.get_server_by_invite_code(invite_link)
     if server is None:
         return None
-    await ServerMembers.add_member(user_id=current_user["id"], server_id=server.id)
-    return server
+    return server, await ServerMembers.add_member(user_id=current_user["id"], server_id=server.id)
 
 
 async def leave_server(server_id: str, current_user):

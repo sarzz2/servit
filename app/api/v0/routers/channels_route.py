@@ -7,8 +7,12 @@ from starlette import status
 from app.core.dependencies import get_current_user
 from app.models.channels import ChannelIn, ChannelUpdate
 from app.models.user import UserModel
-from app.services.v0.channels_service import create_channel, get_channels, update_channel, del_channel
-
+from app.services.v0.channels_service import (
+    create_channel,
+    del_channel,
+    get_channels,
+    update_channel,
+)
 from app.services.v0.permission_service import check_permissions
 
 router = APIRouter(dependencies=[Depends(get_current_user)])

@@ -104,7 +104,7 @@ class ServerOut(DataBase):
         query = """
                 SELECT * FROM servers s
                 JOIN server_members sm ON s.id = sm.server_id
-                WHERE sm.user_id = $1
+                WHERE sm.user_id = $1 AND sm.deleted_at IS NULL
             """
         return await cls.fetch(query, user_id)
 
