@@ -1,5 +1,7 @@
 import asyncio
 import logging
+import time
+import re
 from typing import ClassVar, List, Type, TypeVar, Union
 
 from asyncpg import Connection, Pool, Record, connect, create_pool
@@ -46,6 +48,11 @@ class DataBase(BaseModel):
     async def create_connection(cls, uri: str, **kwargs) -> Connection:
         return await connect(uri, **kwargs)
 
+    @staticmethod
+    def clean_query(query: str) -> str:
+        # Remove leading/trailing spaces and replace multiple spaces/newlines with a single space
+        return re.sub(r'\s+', ' ', query.strip())
+
     @classmethod
     async def fetch(
         cls: Type[BM],
@@ -56,7 +63,11 @@ class DataBase(BaseModel):
     ) -> Union[List[BM], List[Record]]:
         if con is None:
             con = cls.pool
+        start_time = time.perf_counter()
         records = await con.fetch(query, *args)
+        duration = time.perf_counter() - start_time
+        cleaned_query = cls.clean_query(query)
+        log.info(f"Running query: {cleaned_query} with args: {args} ({duration:.6f} seconds)")
         if cls is DataBase or convert is False:
             return records
         return [cls(**record) for record in records]
@@ -70,23 +81,37 @@ class DataBase(BaseModel):
         convert: bool = True,
     ) -> Union[BM, Record, None]:
         con = con or cls.pool
+        start_time = time.perf_counter()
         async with con.acquire() as connection:
             record = await connection.fetchrow(query, *args)
-            if cls is DataBase or record is None or convert is False:
-                return record
-            return cls(**record)
+        duration = time.perf_counter() - start_time
+        cleaned_query = cls.clean_query(query)
+        log.info(f"Running query: {cleaned_query} with args: {args} ({duration:.6f} seconds)")
+        if cls is DataBase or record is None or convert is False:
+            return record
+        return cls(**record)
 
     @classmethod
     async def fetchval(cls, query, *args, con: Union[Connection, Pool] = None, column: int = 0):
         if con is None:
             con = cls.pool
-        return await con.fetchval(query, *args, column=column)
+        start_time = time.perf_counter()
+        result = await con.fetchval(query, *args, column=column)
+        duration = time.perf_counter() - start_time
+        cleaned_query = cls.clean_query(query)
+        log.info(f"Running query: {cleaned_query} with args: {args} ({duration:.6f} seconds)")
+        return result
 
     @classmethod
     async def execute(cls, query: str, *args, con: Union[Connection, Pool] = None) -> str:
         if con is None:
             con = cls.pool
-        return await con.execute(query, *args)
+        start_time = time.perf_counter()
+        result = await con.execute(query, *args)
+        duration = time.perf_counter() - start_time
+        cleaned_query = cls.clean_query(query)
+        log.info(f"Running query: {cleaned_query} with args: {args} ({duration:.6f} seconds)")
+        return result
 
     @classmethod
     async def close_pool(cls) -> None:
