@@ -1,4 +1,4 @@
-name: Lint and Test
+name: Lint
 
 on:
   push:
@@ -36,7 +36,3 @@ jobs:
     - name: Lint with flake8
       run: |
         poetry run flake8 .
-
-    - name: Run tests with pytest
-      run: |
-        poetry run pytest

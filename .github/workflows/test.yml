@@ -1,0 +1,56 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: test_servit
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U testuser"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.13
+      uses: actions/setup-python@v3
+      with:
+        python-version: 3.13
+
+    - name: Install Poetry
+      run: |
+        curl -sSL https://install.python-poetry.org | python3 -
+        export PATH="$HOME/.local/bin:$PATH"
+
+    - name: Install dependencies
+      run: |
+        poetry install
+
+    - name: Set environment variables
+      env:
+        SECRET_KEY: your_secret_key
+        DATABASE_URL: postgres://testuser:testpassword@localhost:5432/test_servit
+        TEST_DATABASE_URL: postgres://testuser:testpassword@localhost:5432/test_servit
+      run: echo "Environment variables set for tests."
+
+    - name: Run tests
+      run: |
+        poetry run pytest --cov=./ --cov-report=xml
