@@ -1,7 +1,7 @@
 import asyncio
 import logging
-import time
 import re
+import time
 from typing import ClassVar, List, Type, TypeVar, Union
 
 from asyncpg import Connection, Pool, Record, connect, create_pool
@@ -51,7 +51,7 @@ class DataBase(BaseModel):
     @staticmethod
     def clean_query(query: str) -> str:
         # Remove leading/trailing spaces and replace multiple spaces/newlines with a single space
-        return re.sub(r'\s+', ' ', query.strip())
+        return re.sub(r"\s+", " ", query.strip())
 
     @classmethod
     async def fetch(

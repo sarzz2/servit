@@ -1,6 +1,5 @@
 import logging
 
-import asyncpg
 from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 

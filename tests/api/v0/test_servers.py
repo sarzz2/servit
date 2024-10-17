@@ -164,6 +164,7 @@ async def no_permissions_found_for_user(client: AsyncClient, test_user_token2, t
 async def update_server_with_invalid_id(client: AsyncClient, test_user_token, test_server):
     headers = {"Authorization": f"Bearer {test_user_token}"}
     update_data = {"description": "updatedserver", "is_public": True}
-    response = await client.patch(f"/api/v0/servers/d51d95ec-e95b-4a57-bc06-4f618baea1f3", json=update_data,
-                                  headers=headers)
+    response = await client.patch(
+        "/api/v0/servers/d51d95ec-e95b-4a57-bc06-4f618baea1f3", json=update_data, headers=headers
+    )
     assert response.status_code == 404

@@ -6,7 +6,7 @@ from botocore.exceptions import NoCredentialsError, PartialCredentialsError
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import StreamingResponse, ORJSONResponse
+from fastapi.responses import ORJSONResponse, StreamingResponse
 
 from app.api.v0.api import api_router
 from app.core.aws_localstack import s3_client

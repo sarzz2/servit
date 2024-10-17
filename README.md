@@ -1,20 +1,87 @@
-# FastAPI Template with asyncpg, Custom Migrations, and User Authentication using poetry
+<div>
 
-## Overview
-This repository is a template for building high-performance web applications with FastAPI, leveraging `asyncpg` for asynchronous PostgreSQL interaction. It includes custom database migrations, user authentication with `bcrypt`, and follows best practices for scalable and secure Python web applications along with `poetry` for dependency management and black and flake8 for code formatting and linting.
+[![Licence](https://img.shields.io/badge/licence-MIT-blue.svg)](/LICENSE)
 
-## Features
-- **FastAPI**: A modern, fast (high-performance), web framework for building APIs with Python 3.7+.
-- **asyncpg**: An efficient, low-latency PostgreSQL database client library for Python.
-- **Custom Migrations**: Manage your database schema with custom migration scripts.
-- **User Authentication**: Basic authentication implemented using `bcrypt` for password hashing and verification.
+</div>
 
-## FAQ
+# Servit
 
-- Want to use your own migration tool? Just remove `migrate.py` file from root and use your own migration tool.
-- How does migrations work? Just add your SQL queries in `migrations` folder and run `python migrate.py` to apply them. make sure to include both -- up and -- down flags. 
-#### Migration commands
+This project is a backend service built with FastAPI and uses PostgreSQL as its database. It supports various features like user management, server management, friend system, and chat messaging, with integrated permissions and role management. The project implements coverage tests, linting, and code formatting through CI/CD pipelines with GitHub Actions.
+
+
+## Requirements
+
+- Python 3.12+
+- PostgreSQL
+- Poetry (for dependency management)
+- Redis (if applicable for caching)
+
+## Setup
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/{yourusername}/servit.git
+cd servit
+```
+### 2. Install the dependencies
+
+```bash
+poetry install
+```
+
+### 3. Create a `.env` file in the root directory and add the following environment variables:
+
+```bash
+SECRET_KEY=your-secret-key
+DATABASE_URL=postgresql://user:password@localhost/db_name
+S3_ENDPOINT_URL=http://localhost:4566 # for localstack
+S3_REGION_NAME=us-east-1
+```
+
+### 4. Apply the database migrations
+
+```bash
+python migrate.py
+```
+
+All migration commands:-
 - `python migrate.py --up` to apply all migrations.
 - `python migrate.py --down` to rollback the last migration.
 - `python migrate.py --down 1` to rollback the last 1 migration.
 - `python migrate.py --specific filename` to apply a specific migration.
+
+### 5. Set up pre-commit hooks
+```
+poetry run pre-commit install
+```
+This will run the checks defined in `.pre-commit-config.yaml` before every commit to ensure that the code is properly formatted and linted.
+
+```bash
+5. Run the server
+
+```bash
+uvicorn app.main:app --reload
+```
+or
+```bash
+fastapi run dev
+```
+
+### 6. Open the browser and go to `http://localhost:8000/docs` to view the API documentation.
+
+## Testing
+You can run tests using pytest:
+
+```bash
+poetry run pytest --cov=./
+```
+
+## Formatting and Linting
+You can run the following commands to format and lint the code:
+
+```bash
+poetry run isort .
+poetry run black .
+poetry run flake8
+```
