@@ -17,13 +17,13 @@ jobs:
       postgres:
         image: postgres:13
         env:
-          POSTGRES_USER: testuser
-          POSTGRES_PASSWORD: testpassword
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
           POSTGRES_DB: test_servit
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U testuser"
+          --health-cmd "pg_isready -U user"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -43,13 +43,6 @@ jobs:
     - name: Install dependencies
       run: |
         poetry install
-
-    - name: Set environment variables
-      env:
-        SECRET_KEY: your_secret_key
-        DATABASE_URL: postgres://testuser:testpassword@localhost:5432/test_servit
-        TEST_DATABASE_URL: postgres://testuser:testpassword@localhost:5432/test_servit
-      run: echo "Environment variables set for tests."
 
     - name: Run tests
       run: |
