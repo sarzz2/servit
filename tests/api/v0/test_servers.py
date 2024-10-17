@@ -141,3 +141,29 @@ async def test_updating_server_without_permission(client: AsyncClient, test_user
     response = await client.patch(f"/api/v0/servers/{server_id}", json=update_data, headers=headers)
     assert response.status_code == 403
     assert "Insufficient permissions" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def get_user_permissions_in_server(client: AsyncClient, test_user_token, test_server):
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    server_id = test_server["id"]
+    response = await client.get(f"/api/v0/servers/{server_id}/roles_permissions", headers=headers)
+    assert response.status_code == 200
+    assert response.json() == {"roles": [], "permissions": []}
+
+
+@pytest.mark.asyncio
+async def no_permissions_found_for_user(client: AsyncClient, test_user_token2, test_server):
+    headers = {"Authorization": f"Bearer {test_user_token2}"}
+    server_id = test_server["id"]
+    response = await client.get(f"/api/v0/servers/{server_id}/roles_permissions", headers=headers)
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def update_server_with_invalid_id(client: AsyncClient, test_user_token, test_server):
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    update_data = {"description": "updatedserver", "is_public": True}
+    response = await client.patch(f"/api/v0/servers/d51d95ec-e95b-4a57-bc06-4f618baea1f3", json=update_data,
+                                  headers=headers)
+    assert response.status_code == 404

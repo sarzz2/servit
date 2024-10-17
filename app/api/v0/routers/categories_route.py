@@ -27,16 +27,10 @@ async def create_new_category(
     current_user: UserModel = Depends(get_current_user),
 ):
     """Create a new category"""
-    try:
-        await create_category(
-            server_id=server_id,
-            name=category.name,
-        )
-    except asyncpg.ForeignKeyViolationError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid server_id",
-        )
+    await create_category(
+        server_id=server_id,
+        name=category.name,
+    )
     log.info(
         f"Category created successfully: {category.name} by Username:{current_user['username']}"
         f" & Id {current_user['id']}"

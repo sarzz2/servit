@@ -65,6 +65,12 @@ async def test_get_current_user(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_get_current_user_with_invalid_token(client: AsyncClient):
+    response = await client.get("/api/v0/users/me", headers={"Authorization": "Bearer invalidtoken"})
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Could not validate credentials"}
+
+@pytest.mark.asyncio
 async def test_invalid_token(client: AsyncClient):
     response = await client.get("/api/v0/users/me", headers={"Authorization": "Bearer invalidtoken"})
     assert response.status_code == 401

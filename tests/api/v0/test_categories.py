@@ -16,7 +16,7 @@ async def test_create_category(client: AsyncClient, test_user_token, test_server
 
     # Check the response JSON
     response_data = response.json()
-    assert response_data["category"]["name"] == "testcategory"
+    assert response_data == {"message": "Category created successfully", "category": {"name": "testcategory"}}
 
 
 @pytest.mark.asyncio

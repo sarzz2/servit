@@ -42,6 +42,22 @@ async def test_create_channel(client: AsyncClient, test_user_token, test_server,
 
 
 @pytest.mark.asyncio
+async def test_create_channel_invalid_category_id(client: AsyncClient, test_user_token, test_server, test_category):
+    # Define channel data for creation
+    channel_data = {"name": "testchannel", "description": "test description"}
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+
+    # Make a POST request to create a channel
+    response = await client.post(
+        f"/api/v0/channels/{test_server['id']}/{'d51d95ec-e95b-4a57-bc06-4f618baea1f3'}", json=channel_data, headers=headers
+    )
+
+    # Check the status code
+    assert response.status_code == 400
+
+
+
+@pytest.mark.asyncio
 async def test_create_channel_unauthorized(client: AsyncClient, test_server, test_category):
     # Attempt to create a channel without authorization
     channel_data = {"name": "Unauthorized Channel", "description": "test description"}
