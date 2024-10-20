@@ -1,0 +1,13 @@
+version: 2
+updates:
+  - package-ecosystem: "python-poetry"
+    directory: "/" 
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+    auto-merge: true
+    security-updates-only: false
