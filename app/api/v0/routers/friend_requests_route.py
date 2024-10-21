@@ -37,6 +37,14 @@ async def update_friend_status(friend_id: UUID, status: str, current_user: UserM
     return result
 
 
+@router.delete("/cancel/{friend_id}", status_code=status.HTTP_200_OK)
+async def cancel_friend_request(friend_id: UUID, current_user: UserModel = Depends(get_current_user)):
+    result = await FriendService.cancel_request(current_user["id"], friend_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Friend request not found")
+    return result
+
+
 @router.get("/", response_model=List[FriendRequest], status_code=status.HTTP_200_OK)
 async def get_friends(current_user: UserModel = Depends(get_current_user)):
     friends = await FriendService.get_all_friends(current_user["id"])
@@ -47,6 +55,12 @@ async def get_friends(current_user: UserModel = Depends(get_current_user)):
 async def get_friend_requests(current_user: UserModel = Depends(get_current_user)):
     requests = await FriendService.get_pending_requests(current_user["id"])
     return requests
+
+
+@router.get("/blocked", response_model=List[FriendRequest], status_code=status.HTTP_200_OK)
+async def get_blocked_friends(current_user: UserModel = Depends(get_current_user)):
+    blocked = await FriendService.get_blocked_friends(current_user["id"])
+    return blocked
 
 
 @router.delete("/{friend_id}", status_code=status.HTTP_204_NO_CONTENT)

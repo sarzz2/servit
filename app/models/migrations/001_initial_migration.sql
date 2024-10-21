@@ -154,6 +154,11 @@ CREATE TABLE IF NOT EXISTS channels (
     FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE
 );
 
+-- Create Trigram Indexes
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE INDEX idx_users_username_trgm ON users USING gin (username gin_trgm_ops);
+CREATE INDEX idx_users_email_trgm ON users USING gin (email gin_trgm_ops);
+
 -- down
 DROP TABLE IF EXISTS channels;
 DROP TABLE IF EXISTS categories;
@@ -166,3 +171,6 @@ DROP TABLE IF EXISTS server_roles;
 DROP TABLE IF EXISTS server_members;
 DROP TABLE IF EXISTS servers;
 DROP TABLE IF EXISTS users;
+DROP EXTENSION IF EXISTS pg_trgm;
+DROP INDEX IF EXISTS idx_users_username_trgm;
+DROP INDEX IF EXISTS idx_users_email_trgm;

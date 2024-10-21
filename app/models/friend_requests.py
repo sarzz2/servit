@@ -65,6 +65,15 @@ class FriendRequest(DataBase):
         return await cls.fetch(query, user_id)
 
     @classmethod
+    async def get_blocked_friends(cls, user_id: UUID):
+        query = """
+            SELECT user_id, friend_id, status, username, email, profile_picture_url FROM friends
+              JOIN users ON friends.user_id = users.id
+             WHERE friend_id = $1 AND status = 'blocked';
+        """
+        return await cls.fetch(query, user_id)
+
+    @classmethod
     async def remove_friend(cls, user_id: UUID, friend_id: UUID):
         query = """
             DELETE FROM friends
@@ -72,3 +81,11 @@ class FriendRequest(DataBase):
             RETURNING *;
         """
         return await cls.fetchrow(query, user_id, friend_id)
+
+    @classmethod
+    async def delete_request(cls, user_id: UUID, friend_id: UUID):
+        query = """
+            DELETE FROM friends
+            WHERE user_id = $1 AND friend_id = $2
+        """
+        return await cls.execute(query, user_id, friend_id)

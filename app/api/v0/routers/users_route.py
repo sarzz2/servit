@@ -49,4 +49,13 @@ async def read_users_me(current_user: UserModel = Depends(get_current_user)):
     return current_user
 
 
+@protected_router.get("/search/{query}")
+async def search_user(query: str, current_user: UserModel = Depends(get_current_user)):
+    """
+    Search for a user
+    """
+    users = await UserModel.search_user(query, current_user["id"])
+    return users
+
+
 router.include_router(protected_router)

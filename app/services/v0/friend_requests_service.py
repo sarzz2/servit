@@ -23,3 +23,11 @@ class FriendService:
     @staticmethod
     async def remove_friend(user_id: UUID, friend_id: UUID):
         return await FriendRequest.remove_friend(user_id, friend_id)
+
+    @staticmethod
+    async def get_blocked_friends(user_id: UUID):
+        return await FriendRequest.get_blocked_friends(user_id)
+
+    @staticmethod
+    async def cancel_request(user_id: UUID, friend_id: UUID):
+        return await FriendRequest.delete_request(user_id, friend_id)
