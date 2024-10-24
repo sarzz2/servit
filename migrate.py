@@ -6,9 +6,6 @@ import asyncpg
 
 from app.core.config import settings
 
-# Database connection pool
-db_pool = None
-
 
 async def create_migrations_table(pool):
     """
@@ -134,6 +131,23 @@ async def run_specific_migration(pool, migration_name: str, direction: str = "up
         await remove_migration_record(pool, migration_name)
 
 
+async def check_all_migrations_applied():
+    migrations_dir = os.path.join("app/models", "migrations")
+    files = sorted(os.listdir(migrations_dir))
+    pool = await create_db_pool()
+    try:
+        applied_migration = await get_applied_migrations(pool)
+    except asyncpg.UndefinedTableError:
+        return False
+    if applied_migration != files[-1]:
+        return False
+    return True
+
+
+async def create_db_pool():
+    return await asyncpg.create_pool(settings.DATABASE_URL)
+
+
 async def main():
     parser = argparse.ArgumentParser(description="Manage database migrations.")
     parser.add_argument(
@@ -154,10 +168,8 @@ async def main():
 
     args = parser.parse_args()
 
-    global db_pool
-    db_pool = await asyncpg.create_pool(settings.DATABASE_URL)
+    db_pool = await create_db_pool()
     await create_migrations_table(db_pool)
-
     if args.specific:
         await run_specific_migration(db_pool, args.specific, direction=args.direction)
     else:

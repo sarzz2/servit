@@ -13,6 +13,7 @@ from app.core.aws_localstack import s3_client
 from app.core.config import settings
 from app.core.database import DataBase
 from app.core.logging_config import configure_logging
+from migrate import check_all_migrations_applied
 
 logger = configure_logging()
 
@@ -21,7 +22,9 @@ logger = configure_logging()
 async def lifespan(app: FastAPI):
     database_instance = DataBase()
     await database_instance.create_pool(uri=settings.DATABASE_URL)
-    logger.info("Database connected successfully")
+    all_migrations_applied_check = await check_all_migrations_applied()
+    if not all_migrations_applied_check:
+        logger.critical("You have pending migrations")
     yield
     await database_instance.close_pool()
     logger.info("Database disconnected successfully")

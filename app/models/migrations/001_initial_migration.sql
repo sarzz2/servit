@@ -1,6 +1,15 @@
 -- up
--- Create Users Table
+-- Create UUID function
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+CREATE OR REPLACE FUNCTION gen_random_uuid()
+RETURNS UUID AS $$
+BEGIN
+    RETURN uuid_generate_v4();
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create Users Table
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username VARCHAR(255) UNIQUE NOT NULL,
@@ -174,3 +183,5 @@ DROP TABLE IF EXISTS users;
 DROP EXTENSION IF EXISTS pg_trgm;
 DROP INDEX IF EXISTS idx_users_username_trgm;
 DROP INDEX IF EXISTS idx_users_email_trgm;
+drop extension if exists "uuid-ossp";
+drop function if exists gen_random_uuid();

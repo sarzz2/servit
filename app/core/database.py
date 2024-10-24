@@ -34,15 +34,18 @@ class DataBase(BaseModel):
         loop: asyncio.AbstractEventLoop = None,
         **kwargs,
     ) -> None:
-        cls.pool = await create_pool(
-            uri,
-            min_size=min_con,
-            max_size=max_con,
-            loop=loop,
-            record_class=CustomRecord,
-            **kwargs,
-        )
-        log.info(f"Established a pool with {min_con} - {max_con} connections")
+        try:
+            cls.pool = await create_pool(
+                uri,
+                min_size=min_con,
+                max_size=max_con,
+                loop=loop,
+                record_class=CustomRecord,
+                **kwargs,
+            )
+            log.info(f"Established DB pool with {min_con} - {max_con} connections")
+        except Exception as e:
+            log.error(f"DB connection failed due to {e}")
 
     @classmethod
     async def create_connection(cls, uri: str, **kwargs) -> Connection:
