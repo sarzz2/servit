@@ -183,5 +183,5 @@ DROP TABLE IF EXISTS users;
 DROP EXTENSION IF EXISTS pg_trgm;
 DROP INDEX IF EXISTS idx_users_username_trgm;
 DROP INDEX IF EXISTS idx_users_email_trgm;
-drop extension if exists "uuid-ossp";
-drop function if exists gen_random_uuid();
+drop extension if exists "uuid-ossp" CASCADE;
+drop function if exists gen_random_uuid() CASCADE;
