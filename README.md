@@ -35,6 +35,7 @@ poetry install
 ```bash
 SECRET_KEY=your-secret-key
 DATABASE_URL=postgresql://user:password@localhost/db_name
+TEST_DATABASE_URL=postgresql://user:password@localhost/test_db_name # required to run tests locally
 S3_ENDPOINT_URL=http://localhost:4566 # for localstack
 S3_REGION_NAME=us-east-1
 ```
