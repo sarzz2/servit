@@ -8,8 +8,8 @@ from app.services.v0.user_service import register_user
 async def test_create_user(client: AsyncClient):
     # Define user data for creation
     user_data = {
-        "username": "testuser",
-        "email": "testuser@example.com",
+        "username": "testuserr",
+        "email": "testuserr@example.com",
         "password": "testpassword@123",
     }
 
@@ -53,15 +53,15 @@ async def test_invalid_login(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_get_current_user(client: AsyncClient):
     # Register a user directly
-    await register_user(username="loginuser", email="loginuser@example.com", password="testpassword@123")
-    response = await client.post("/api/v0/users/login", json={"username": "loginuser", "password": "testpassword@123"})
+    await register_user(username="loginuser2", email="loginuser2@example.com", password="testpassword@123")
+    response = await client.post("/api/v0/users/login", json={"username": "loginuser2", "password": "testpassword@123"})
     data = response.json()
     access_token = data["access_token"]
     response = await client.get("/api/v0/users/me", headers={"Authorization": f"Bearer {access_token}"})
     assert response.status_code == 200
     data = response.json()
-    assert data["username"] == "loginuser"
-    assert data["email"] == "loginuser@example.com"
+    assert data["username"] == "loginuser2"
+    assert data["email"] == "loginuser2@example.com"
 
 
 @pytest.mark.asyncio
