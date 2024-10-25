@@ -14,6 +14,7 @@ from app.services.v0.server_service import (
     get_user_roles_permissions,
     join_server,
     leave_server,
+    regenerate_invite_code,
     update_server,
 )
 
@@ -100,3 +101,11 @@ async def update_server_by_id(
     if response == "UPDATE 0":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Server not found")
     return {"message": "Successfully updated server", "server": updated_fields}
+
+
+@router.patch("/regenerate_invite_code/{server_id}", status_code=status.HTTP_200_OK)
+@check_permissions(["MANAGE_SERVER", "ADMINISTRATOR"])
+async def re_generate_invite_code(server_id: str, current_user: UserModel = Depends(get_current_user)):
+    """Create a new invite code for the server"""
+    response = await regenerate_invite_code(server_id)
+    return {"server_id": server_id, "invite_code": response}

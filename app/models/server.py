@@ -11,19 +11,19 @@ from pydantic import Field, constr
 from app.core.database import DataBase
 
 
+def generate_invite_code(length: int = 6) -> str:
+    return "".join(random.choices(string.ascii_uppercase + string.digits, k=length))
+
+
 class ServerIn(DataBase):
     name: constr(min_length=5, max_length=255) = Field(..., description="Name of the server")
     description: Optional[str] = Field(None, description="Detailed description of the server")
     is_public: bool = Field(default=True, description="Visibility of the server (public or private)")
 
     @classmethod
-    def generate_invite_code(cls, length: int = 6) -> str:
-        return "".join(random.choices(string.ascii_uppercase + string.digits, k=length))
-
-    @classmethod
     async def create_server(cls, name: str, description: str, owner_id: str, is_public: bool):
         """Create a new server and add the owner as a member"""
-        invite_code = cls.generate_invite_code()
+        invite_code = generate_invite_code()
         # Retry logic for handling unique constraint violation
         while True:
             try:
@@ -133,3 +133,14 @@ class ServerUpdate(DataBase):
             """
         values = list(kwargs.values())
         return await cls.execute(query, server_id, *values)
+
+    @classmethod
+    async def regenerate_invite_code(cls, server_id):
+        invite_code = generate_invite_code()
+        query = """UPDATE servers SET invite_code = $1"""
+        while True:
+            try:
+                await cls.fetchval(query, invite_code)
+                return invite_code
+            except asyncpg.UniqueViolationError:
+                invite_code = cls.generate_invite_code()

@@ -92,3 +92,7 @@ AND EXISTS (SELECT 1 FROM is_owner);
     permissions = list(unique_permissions.values())
 
     return ServerRolesPermissionsResponse(serverId=server_id, roles=roles, permissions=permissions)
+
+
+async def regenerate_invite_code(server_id: str):
+    return await ServerUpdate.regenerate_invite_code(server_id)
