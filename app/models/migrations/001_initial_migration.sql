@@ -94,7 +94,8 @@ VALUES
     ('CHANGE_NICKNAME'),
     ('KICK_MEMBERS'),
     ('BAN_MEMBERS'),
-    ('MANAGE_SERVER');
+    ('MANAGE_SERVER'),
+    ('OWNER');
 
 
 -- Create Server_Role_Permissions Table to link roles and permissions within a server
