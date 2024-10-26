@@ -75,3 +75,22 @@ class UserModel(DataBase):
         if users:
             return [dict(user) for user in users]
         return {"message": "No user found"}
+
+
+class UserUpdate(DataBase):
+    username: Optional[str]
+    email: Optional[EmailStr]
+    profile_picture_url: Optional[str]
+
+    @classmethod
+    async def update_user(cls, user_id: str, **kwargs):
+        """Update user details"""
+        # Construct the SET clause dynamically
+        set_clause = ", ".join([f"{key} = ${i + 2}" for i, key in enumerate(kwargs.keys())])
+        query = f"""
+                UPDATE users SET {set_clause}
+                 WHERE id = $1
+             RETURNING *;
+            """
+        values = list(kwargs.values())
+        return await cls.fetchrow(query, user_id, *values)

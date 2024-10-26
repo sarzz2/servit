@@ -1,12 +1,12 @@
 import logging
 
 import asyncpg
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from starlette import status
 
 from app.core.auth import create_access_token
 from app.core.dependencies import get_current_user
-from app.models.user import UserIn, UserLogin, UserModel
+from app.models.user import UserIn, UserLogin, UserModel, UserUpdate
 from app.services.v0.user_service import authenticate_user, register_user
 
 log = logging.getLogger("fastapi")
@@ -56,6 +56,19 @@ async def search_user(query: str, current_user: UserModel = Depends(get_current_
     """
     users = await UserModel.search_user(query, current_user["id"])
     return users
+
+
+@protected_router.patch("/update")
+async def update_current_user(request: Request, current_user: UserModel = Depends(get_current_user)):
+    """
+    Update user
+    """
+    update_data = await request.json()
+    try:
+        user = await UserUpdate.update_user(current_user["id"], **update_data)
+    except asyncpg.UniqueViolationError as e:
+        raise HTTPException(status_code=400, detail=e.detail)
+    return user
 
 
 router.include_router(protected_router)

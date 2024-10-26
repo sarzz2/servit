@@ -16,8 +16,10 @@ class ServerRolesPermissionsResponse(DataBase):
     permissions: List[ServerPermission]
 
 
-async def create_server(current_user, name: str, description: str, is_public: bool = False):
-    return await ServerIn.create_server(name, description, current_user["id"], is_public)
+async def create_server(
+    current_user, name: str, description: str, is_public: bool = False, server_picture_url: str = None
+):
+    return await ServerIn.create_server(name, description, current_user["id"], is_public, server_picture_url)
 
 
 async def get_server_details_by_id(server_id: str):
@@ -46,30 +48,28 @@ async def update_server(server_id: str, **kwargs):
 async def get_user_roles_permissions(user_id, server_id):
     query = """
                 WITH user_roles AS (
-    SELECT r.id AS role_id, r.name AS role_name
-    FROM server_user_roles sur
-    JOIN server_roles r ON r.id = sur.role_id
-    WHERE sur.user_id = $1 AND r.server_id = $2
-),
-role_permissions AS (
-    SELECT rp.role_id, p.id AS permission_id, p.name AS permission_name
-    FROM server_role_permissions rp
-    JOIN server_permissions p ON p.id = rp.permission_id
-    WHERE rp.role_id IN (SELECT role_id FROM user_roles)
-),
-is_owner AS (
-    SELECT owner_id from servers s
-    WHERE s.owner_id = $1 AND s.id = $2
-    LIMIT 1
-)
-SELECT ur.role_id, ur.role_name, rp.permission_id, rp.permission_name
-FROM user_roles ur
-LEFT JOIN role_permissions rp ON rp.role_id = ur.role_id
-UNION ALL
-SELECT NULL AS role_id, NULL AS role_name, p.id AS permission_id, p.name AS permission_name
-FROM server_permissions p
-WHERE p.name = 'OWNER'
-AND EXISTS (SELECT 1 FROM is_owner);
+              SELECT r.id AS role_id, r.name AS role_name
+                FROM server_user_roles sur
+                JOIN server_roles r ON r.id = sur.role_id
+               WHERE sur.user_id = $1 AND r.server_id = $2
+                ),
+ role_permissions AS (
+              SELECT rp.role_id, p.id AS permission_id, p.name AS permission_name
+                FROM server_role_permissions rp
+                JOIN server_permissions p ON p.id = rp.permission_id
+               WHERE rp.role_id IN (SELECT role_id FROM user_roles)
+                ),
+         is_owner AS (
+              SELECT owner_id from servers s
+               WHERE s.owner_id = $1 AND s.id = $2
+               LIMIT 1
+                )
+              SELECT ur.role_id, ur.role_name, rp.permission_id, rp.permission_name
+                FROM user_roles ur
+           LEFT JOIN role_permissions rp ON rp.role_id = ur.role_id UNION ALL
+              SELECT NULL AS role_id, NULL AS role_name, p.id AS permission_id, p.name AS permission_name
+                FROM server_permissions p
+               WHERE p.name = 'OWNER' AND EXISTS (SELECT 1 FROM is_owner);
         """
     records = await DataBase.fetch(query, user_id, server_id)
     # Use sets to track unique roles and permissions

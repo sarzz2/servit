@@ -19,9 +19,10 @@ class ServerIn(DataBase):
     name: constr(min_length=5, max_length=255) = Field(..., description="Name of the server")
     description: Optional[str] = Field(None, description="Detailed description of the server")
     is_public: bool = Field(default=True, description="Visibility of the server (public or private)")
+    server_picture_url: Optional[str] = Field(None, description="URL of the server picture")
 
     @classmethod
-    async def create_server(cls, name: str, description: str, owner_id: str, is_public: bool):
+    async def create_server(cls, name: str, description: str, owner_id: str, is_public: bool, server_picture_url: str):
         """Create a new server and add the owner as a member"""
         invite_code = generate_invite_code()
         # Retry logic for handling unique constraint violation
@@ -29,8 +30,8 @@ class ServerIn(DataBase):
             try:
                 query = """
                             WITH inserted_server AS (
-                     INSERT INTO servers (name, description, owner_id, invite_code, is_public)
-                          VALUES ($1, $2, $3, $4, $5)
+                     INSERT INTO servers (name, description, owner_id, invite_code, is_public, server_picture_url)
+                          VALUES ($1, $2, $3, $4, $5, $6)
                        RETURNING id),
               inserted_member AS (
                      INSERT INTO server_members (server_id, user_id, nickname)
@@ -65,7 +66,7 @@ class ServerIn(DataBase):
                           VALUES ($3, (SELECT id FROM inserted_role));
                     """
                 # Try executing the insert query with the generated invite code
-                return await cls.execute(query, name, description, owner_id, invite_code, is_public)
+                return await cls.execute(query, name, description, owner_id, invite_code, is_public, server_picture_url)
             except asyncpg.UniqueViolationError as e:
                 constraint_name = re.search(r"Key \((.*?)\)=\((.*?)\) already exists", str(e), re.IGNORECASE).group(1)
                 if constraint_name != "invite_code":
@@ -81,6 +82,7 @@ class ServerOut(DataBase):
     invite_code: constr(max_length=20) = Field(..., description="Unique invite code for the server")
     is_public: bool = Field(..., description="Visibility of the server (public or private)")
     max_members: int = Field(..., description="Maximum number of members allowed in the server")
+    server_picture_url: Optional[str] = Field(None, description="URL of the server picture")
     created_at: datetime.datetime = Field(..., description="Date and time of server creation")
 
     @classmethod
@@ -114,6 +116,7 @@ class ServerUpdate(DataBase):
     description: Optional[str] = Field(None, description="Detailed description of the server")
     is_public: Optional[bool] = Field(None, description="Visibility of the server (public or private)")
     owner_id: Optional[UUID] = Field(None, description="ID of the owner (must match a user UUID)")
+    server_picture_url: Optional[str] = Field(None, description="URL of the server picture")
     invite_code: Optional[constr(min_length=6, max_length=20)] = Field(
         None, description="Unique invite code for the server"
     )

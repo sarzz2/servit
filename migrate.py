@@ -139,7 +139,7 @@ async def check_all_migrations_applied():
         applied_migration = await get_applied_migrations(pool)
     except asyncpg.UndefinedTableError:
         return False
-    if applied_migration != files[-1]:
+    if applied_migration != files:
         return False
     return True
 
