@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from mimetypes import guess_type
 
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import ORJSONResponse, StreamingResponse
@@ -49,17 +49,19 @@ app.add_middleware(
 )
 app.add_middleware(GZipMiddleware, minimum_size=1500)
 
-
 # S3 endpoints for file upload, view and delete
 AWS_BUCKET_NAME = settings.AWS_BUCKET_NAME
 
 
-@app.post("/upload/")
-async def upload_file(file: UploadFile = File(...)):
+@app.post("/api/v0/upload")
+async def upload_file(request: Request, file: UploadFile = File(...)):
     try:
         unique_key = f"{uuid.uuid4()}_{file.filename}"
         s3_client.upload_fileobj(file.file, AWS_BUCKET_NAME, unique_key)
-        return {"message": "File uploaded successfully", "unique_key": unique_key, "original_filename": file.filename}
+        return {
+            "url": f"{str(request.base_url)[:-1]}/files/{unique_key}",
+            "message": "File uploaded successfully",
+        }
     except (NoCredentialsError, PartialCredentialsError):
         return {"error": "Credentials not available"}
 
