@@ -2,8 +2,9 @@ from typing import List
 from uuid import UUID
 
 import asyncpg
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 
+from app.api.v0.routers import limiter
 from app.core.dependencies import get_current_user
 from app.models.friend_requests import FriendRequest
 from app.models.user import UserModel
@@ -13,7 +14,8 @@ router = APIRouter()
 
 
 @router.post("/{friend_id}", status_code=status.HTTP_201_CREATED)
-async def send_friend_request(friend_id: UUID, current_user: UserModel = Depends(get_current_user)):
+@limiter.limit("500/hour")
+async def send_friend_request(request: Request, friend_id: UUID, current_user: UserModel = Depends(get_current_user)):
     if friend_id == current_user["id"]:
         raise HTTPException(status_code=400, detail="You cannot send a friend request to yourself")
     try:

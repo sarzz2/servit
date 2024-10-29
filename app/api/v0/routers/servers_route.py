@@ -3,6 +3,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Request
 from starlette import status
 
+from app.api.v0.routers import limiter
 from app.core.dependencies import get_current_user
 from app.models.server import ServerIn, ServerUpdate
 from app.models.user import UserModel
@@ -23,7 +24,9 @@ log = logging.getLogger("fastapi")
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
+@limiter.limit("3/minute")
 async def create_new_server(
+    request: Request,
     server: ServerIn,
     current_user: UserModel = Depends(get_current_user),
 ):
@@ -105,7 +108,10 @@ async def update_server_by_id(
 
 @router.patch("/regenerate_invite_code/{server_id}", status_code=status.HTTP_200_OK)
 @check_permissions(["MANAGE_SERVER", "ADMINISTRATOR"])
-async def re_generate_invite_code(server_id: str, current_user: UserModel = Depends(get_current_user)):
+@limiter.limit("5/minute")
+async def re_generate_invite_code(
+    request: Request, server_id: str, current_user: UserModel = Depends(get_current_user)
+):
     """Create a new invite code for the server"""
     response = await regenerate_invite_code(server_id)
     return {"server_id": server_id, "invite_code": response}

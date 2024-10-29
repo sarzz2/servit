@@ -7,6 +7,9 @@ from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import ORJSONResponse, StreamingResponse
+from slowapi import Limiter
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from app.api.v0.api import api_router
 from app.core.aws_localstack import s3_client
@@ -30,12 +33,25 @@ async def lifespan(app: FastAPI):
     logger.info("Database disconnected successfully")
 
 
+limiter = Limiter(key_func=get_remote_address)
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.PROJECT_VERSION,
     lifespan=lifespan,
     default_response_class=ORJSONResponse,
 )
+
+app.state.limiter = limiter
+
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
+    return ORJSONResponse(
+        status_code=429,
+        content={"detail": [{"msg": "Rate limit exceeded. Please try again later."}]},
+    )
+
 
 app.include_router(api_router, prefix=settings.API_V0_STR)
 

@@ -1,8 +1,9 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from starlette import status
 
+from app.api.v0.routers import limiter
 from app.core.dependencies import get_current_user
 from app.models.categories import CategoriesIn, CategoriesUpdate
 from app.models.user import UserModel
@@ -20,7 +21,9 @@ log = logging.getLogger("fastapi")
 
 @router.post("/{server_id}", status_code=status.HTTP_201_CREATED)
 @check_permissions(["MANAGE_CHANNELS", "MANAGE_SERVER", "ADMINISTRATOR"])
+@limiter.limit("10/minute")
 async def create_new_category(
+    request: Request,
     server_id: str,
     category: CategoriesIn,
     current_user: UserModel = Depends(get_current_user),
@@ -47,7 +50,11 @@ async def get_server_categories(server_id: str):
 @router.patch("/{server_id}/{category_id}")
 @check_permissions(["MANAGE_CHANNELS", "MANAGE_SERVER", "ADMINISTRATOR"])
 async def update_category(
-    server_id: str, category_id: str, category: CategoriesUpdate, current_user: UserModel = Depends(get_current_user)
+    request: Request,
+    server_id: str,
+    category_id: str,
+    category: CategoriesUpdate,
+    current_user: UserModel = Depends(get_current_user),
 ):
     result = await update_categories(category_id, name=category.name, position=category.position)
     if result is None:

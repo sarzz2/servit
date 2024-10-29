@@ -1,9 +1,10 @@
 import logging
 
 import asyncpg
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from starlette import status
 
+from app.api.v0.routers import limiter
 from app.core.dependencies import get_current_user
 from app.models.channels import ChannelIn, ChannelUpdate
 from app.models.user import UserModel
@@ -21,7 +22,9 @@ log = logging.getLogger("fastapi")
 
 @router.post("/{server_id}/{category_id}", status_code=status.HTTP_201_CREATED)
 @check_permissions(["MANAGE_CHANNELS", "MANAGE_SERVER", "ADMINISTRATOR"])
+@limiter.limit("25/minute")
 async def create_new_channel(
+    request: Request,
     server_id: str,
     category_id: str,
     channel: ChannelIn,
@@ -61,8 +64,13 @@ async def get_category_channels(server_id: str, category_id: str):
 
 @router.patch("/{server_id}/{channel_id}")
 @check_permissions(["MANAGE_CHANNELS", "MANAGE_SERVER", "ADMINISTRATOR"])
+@limiter.limit("50/minute")
 async def update_category_channel(
-    server_id: str, channel_id: str, channel: ChannelUpdate, current_user: UserModel = Depends(get_current_user)
+    request: Request,
+    server_id: str,
+    channel_id: str,
+    channel: ChannelUpdate,
+    current_user: UserModel = Depends(get_current_user),
 ):
     result = await update_channel(
         channel_id, name=channel.name, description=channel.description, position=channel.position
