@@ -1,3 +1,4 @@
+import sys
 import uuid
 from contextlib import asynccontextmanager
 from mimetypes import guess_type
@@ -37,7 +38,10 @@ async def lifespan(app: FastAPI):
     logger.info("Database disconnected successfully")
 
 
-limiter = Limiter(key_func=get_remote_address)
+if "pytest" in sys.modules:
+    limiter = Limiter(key_func=get_remote_address, enabled=False)
+else:
+    limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,

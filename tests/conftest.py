@@ -1,10 +1,20 @@
+import asyncio
+
 import pytest
 from httpx import AsyncClient
 
 from app.core.config import settings
 from app.core.database import DataBase
+from app.core.redis import RedisClient
 from app.main import app
 from migrate import apply_migrations, create_migrations_table
+
+
+@pytest.fixture(scope="session")
+def event_loop():
+    loop = asyncio.new_event_loop()
+    yield loop
+    loop.close()
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -15,6 +25,7 @@ async def setup_database():
     await create_migrations_table(database_instance.pool)
     await apply_migrations(database_instance.pool)
     print("Database connected successfully")
+    await RedisClient().connect()
 
     # Yield control back to the tests
     yield
@@ -23,6 +34,8 @@ async def setup_database():
     await apply_migrations(database_instance.pool, "down")
     await database_instance.close_pool()
     print("Database disconnected successfully")
+    await RedisClient().client.flushdb()
+    await RedisClient().close()
 
 
 @pytest.fixture(scope="function")

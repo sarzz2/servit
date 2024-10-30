@@ -18,4 +18,4 @@ class RedisClient:
             raise RuntimeError("Redis connection failed")
 
     async def close(self):
-        await self.client.close()
+        await self.client.aclose()
