@@ -15,6 +15,7 @@ from app.api.v0.api import api_router
 from app.core.aws_localstack import s3_client
 from app.core.config import settings
 from app.core.database import DataBase
+from app.core.dependencies import redis_client
 from app.core.logging_config import configure_logging
 from migrate import check_all_migrations_applied
 
@@ -25,11 +26,14 @@ logger = configure_logging()
 async def lifespan(app: FastAPI):
     database_instance = DataBase()
     await database_instance.create_pool(uri=settings.DATABASE_URL)
+    await redis_client.connect()
     all_migrations_applied_check = await check_all_migrations_applied()
     if not all_migrations_applied_check:
         logger.critical("You have pending migrations")
+        raise RuntimeError("You have pending migrations")
     yield
     await database_instance.close_pool()
+    await redis_client.close()
     logger.info("Database disconnected successfully")
 
 

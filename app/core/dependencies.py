@@ -1,11 +1,14 @@
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
+from redis.asyncio import Redis
 from starlette import status
 
 from app.core.auth import verify_token
+from app.core.redis import RedisClient
 from app.models.user import UserModel
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+redis_client = RedisClient()
 
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
@@ -22,3 +25,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         return user
     except HTTPException:
         raise credentials_exception
+
+
+async def get_redis() -> Redis:
+    return redis_client.client
