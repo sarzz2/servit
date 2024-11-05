@@ -97,6 +97,17 @@ async def test_update_channel(client: AsyncClient, test_user_token, test_server,
 
 
 @pytest.mark.asyncio
+async def test_update_invalid_channel_id(client: AsyncClient, test_server, test_user_token, test_channel):
+    channel_data = {"name": "updatedchannel", "description": "updated description"}
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    # Passing server id as channel id to simulate invalid id
+    response = await client.patch(
+        f"/api/v0/channels/{test_server['id']}/{test_server['id']}", json=channel_data, headers=headers
+    )
+    assert response.status_code == 400
+
+
+@pytest.mark.asyncio
 async def test_update_channel_unauthorized(client: AsyncClient, test_server, test_channel):
     # Attempt to update a channel without authorization
     channel_data = {"name": "Unauthorized Channel", "description": "test description"}
@@ -111,6 +122,13 @@ async def test_delete_channel(client: AsyncClient, test_user_token, test_server,
     headers = {"Authorization": f"Bearer {test_user_token}"}
     response = await client.delete(f"/api/v0/channels/{test_server['id']}/{test_channel['id']}", headers=headers)
     assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_delete_invalid_channel(client: AsyncClient, test_user_token, test_server, test_channel):
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    response = await client.delete(f"/api/v0/channels/{test_server['id']}/{test_server['id']}", headers=headers)
+    assert response.status_code == 400
 
 
 @pytest.mark.asyncio

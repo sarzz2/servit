@@ -1,6 +1,5 @@
 import logging
 
-import asyncpg
 from fastapi import APIRouter, Depends, HTTPException, Request
 from starlette import status
 
@@ -31,23 +30,15 @@ async def create_new_channel(
     current_user: UserModel = Depends(get_current_user),
 ):
     """Create a new channel"""
-    try:
-        result = await create_channel(
-            server_id=server_id,
-            category_id=category_id,
-            name=channel.name,
-            description=channel.description,
-        )
-        if not result:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="Category does not belong to the server"
-            )
+    result = await create_channel(
+        server_id=server_id,
+        category_id=category_id,
+        name=channel.name,
+        description=channel.description,
+    )
+    if not result:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Category does not belong to the server")
 
-    except asyncpg.ForeignKeyViolationError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid category_id",
-        )
     log.info(
         f"Channel created successfully: {channel.name} by Username:{current_user['username']}"
         f" & Id {current_user['id']}"
