@@ -75,3 +75,18 @@ async def test_get_current_user_with_invalid_token(client: AsyncClient):
 async def test_invalid_token(client: AsyncClient):
     response = await client.get("/api/v0/users/me", headers={"Authorization": "Bearer invalidtoken"})
     assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_search_user(client: AsyncClient, test_user_token):
+    response = await client.get("/api/v0/users/search/test", headers={"Authorization": f"Bearer {test_user_token}"})
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_update_user(client: AsyncClient, test_user_token):
+    updated_data = {"email": "updated@test.com"}
+    response = await client.patch(
+        "/api/v0/users/update", headers={"Authorization": f"Bearer {test_user_token}"}, json=updated_data
+    )
+    assert response.status_code == 200
