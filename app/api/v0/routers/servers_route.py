@@ -99,10 +99,8 @@ async def update_server_by_id(
 ):
     """Update server details"""
     update_data = await request.json()
-    response = await update_server(server_id, **update_data)
+    await update_server(server_id, **update_data)
     updated_fields = {key: value for key, value in update_data.items() if value is not None}
-    if response == "UPDATE 0":
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Server not found")
     return {"message": "Successfully updated server", "server": updated_fields}
 
 

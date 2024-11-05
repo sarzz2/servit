@@ -37,6 +37,21 @@ async def test_get_server_by_id(client: AsyncClient, test_user_token, test_serve
 
 
 @pytest.mark.asyncio
+async def test_get_server_roles_permission(client: AsyncClient, test_user_token, test_server):
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    response = await client.get(f"/api/v0/servers/{test_server['id']}/roles_permissions", headers=headers)
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_get_server_roles_permission_for_invalid_user(client: AsyncClient, test_user_token2, test_server):
+    headers = {"Authorization": f"Bearer {test_user_token2}"}
+    response = await client.get(f"/api/v0/servers/{test_server['id']}/roles_permissions", headers=headers)
+    assert response.status_code == 404
+    assert response.json()["detail"] == "No roles or permissions found for the user in this server"
+
+
+@pytest.mark.asyncio
 async def test_join_server_by_invite_code(client: AsyncClient, test_user_token2, test_server):
     # Define user data for creation
     invite_link = test_server["invite_code"]
@@ -168,3 +183,11 @@ async def update_server_with_invalid_id(client: AsyncClient, test_user_token, te
         "/api/v0/servers/d51d95ec-e95b-4a57-bc06-4f618baea1f3", json=update_data, headers=headers
     )
     assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_regenerate_code(client: AsyncClient, test_user_token, test_server):
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    server_id = test_server["id"]
+    response = await client.patch(f"/api/v0/servers/regenerate_invite_code/{server_id}", headers=headers)
+    assert response.status_code == 200

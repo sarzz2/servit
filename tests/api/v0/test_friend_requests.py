@@ -149,7 +149,7 @@ async def test_cancel_invalid_friend_request(client: AsyncClient, test_user_toke
 
 
 @pytest.mark.asyncio
-async def get_blocked_friends(client: AsyncClient, test_user_token):
+async def test_get_blocked_friends(client: AsyncClient, test_user_token):
     headers = {"Authorization": f"Bearer {test_user_token}"}
     response = await client.get("/api/v0/friends/blocked", headers=headers)
     assert response.status_code == 200

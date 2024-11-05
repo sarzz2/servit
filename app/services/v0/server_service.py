@@ -91,7 +91,9 @@ async def get_user_roles_permissions(user_id, server_id):
     roles = list(unique_roles.values())
     permissions = list(unique_permissions.values())
 
-    return ServerRolesPermissionsResponse(serverId=server_id, roles=roles, permissions=permissions)
+    if roles and permissions:
+        return ServerRolesPermissionsResponse(serverId=server_id, roles=roles, permissions=permissions)
+    return None
 
 
 async def regenerate_invite_code(server_id: str):
