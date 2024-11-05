@@ -19,11 +19,9 @@ async def send_friend_request(request: Request, friend_id: UUID, current_user: U
     if friend_id == current_user["id"]:
         raise HTTPException(status_code=400, detail="You cannot send a friend request to yourself")
     try:
-        friend_request = await FriendService.send_friend_request(current_user["id"], friend_id)
+        await FriendService.send_friend_request(current_user["id"], friend_id)
     except asyncpg.UniqueViolationError:
         raise HTTPException(status_code=409, detail="Friend request already sent")
-    if not friend_request:
-        raise HTTPException(status_code=400, detail="Unable to send friend request")
     return {"message": "Friend request sent successfully"}
 
 

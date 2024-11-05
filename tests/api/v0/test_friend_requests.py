@@ -94,6 +94,17 @@ async def test_update_friend_status_invalid(client: AsyncClient, test_user_token
 
 
 @pytest.mark.asyncio
+async def test_update_invalid_user(client: AsyncClient, test_user_token, test_friend):
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    friend_id = test_friend["id"]
+
+    response = await client.patch(f"/api/v0/friends/{friend_id}/accepted", headers=headers)
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Friend request not found"
+
+
+@pytest.mark.asyncio
 async def test_remove_friend(client: AsyncClient, test_user_token, test_friend, test_user_token2, test_user):
     headers = {"Authorization": f"Bearer {test_user_token2}"}
     await client.post(f"/api/v0/friends/{test_user['id']}", headers=headers)
@@ -116,3 +127,29 @@ async def test_remove_nonexistent_friend(client: AsyncClient, test_user_token):
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Friend not found"
+
+
+@pytest.mark.asyncio
+async def test_cancel_friend_request(client: AsyncClient, test_user_token2, test_user):
+    headers = {"Authorization": f"Bearer {test_user_token2}"}
+    await client.post(f"/api/v0/friends/{test_user['id']}", headers=headers)
+
+    response = await client.delete(f"/api/v0/friends/cancel/{test_user['id']}", headers=headers)
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_cancel_invalid_friend_request(client: AsyncClient, test_user_token2, test_user):
+    headers = {"Authorization": f"Bearer {test_user_token2}"}
+    await client.post(f"/api/v0/friends/{test_user['id']}", headers=headers)
+    invalid_friend_id = "00000000-0000-0000-0000-000000000000"
+
+    response = await client.delete(f"/api/v0/friends/cancel/{invalid_friend_id}", headers=headers)
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def get_blocked_friends(client: AsyncClient, test_user_token):
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    response = await client.get("/api/v0/friends/blocked", headers=headers)
+    assert response.status_code == 200
