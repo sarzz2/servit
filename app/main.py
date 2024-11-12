@@ -1,10 +1,12 @@
 import sys
+import time
 import uuid
 from contextlib import asynccontextmanager
+from http import HTTPStatus
 from mimetypes import guess_type
 
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
-from fastapi import FastAPI, File, Request, UploadFile
+from fastapi import FastAPI, File, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import ORJSONResponse, StreamingResponse
@@ -75,6 +77,26 @@ app.add_middleware(GZipMiddleware, minimum_size=1500)
 
 # S3 endpoints for file upload, view and delete
 AWS_BUCKET_NAME = settings.AWS_BUCKET_NAME
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    logger.info(f"\033[1;37m{request.method}\033[0m , {request.url} params: {dict(request.query_params)}")
+
+    start_time = time.time()
+    response: Response = await call_next(request)
+    process_time = time.time() - start_time
+    if response.status_code < 400:
+        logger.info(
+            f"Request completed with {response.status_code}"
+            f" {HTTPStatus(response.status_code).phrase} in {process_time:.6f}s"
+        )
+    else:
+        logger.error(
+            f"Request failed with {response.status_code}"
+            f" {HTTPStatus(response.status_code).phrase} in {process_time:.6f}s"
+        )
+    return response
 
 
 @app.post("/api/v0/upload")
