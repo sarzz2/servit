@@ -6,7 +6,7 @@ from httpx import AsyncClient
 async def test_create_server(client: AsyncClient, test_user_token):
     # Define user data for creation
     server_data = {"name": "testserver"}
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
 
     # Make a POST request to the user creation endpoint using AsyncClient
     response = await client.post("/api/v0/servers/", json=server_data, headers=headers)
@@ -31,14 +31,14 @@ async def test_create_server_unauthorized(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_get_server_by_id(client: AsyncClient, test_user_token, test_server):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
     response = await client.get(f"/api/v0/servers/{test_server['id']}", headers=headers)
     assert response.status_code == 200
 
 
 @pytest.mark.asyncio
 async def test_get_server_roles_permission(client: AsyncClient, test_user_token, test_server):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
     response = await client.get(f"/api/v0/servers/{test_server['id']}/roles_permissions", headers=headers)
     assert response.status_code == 200
 
@@ -85,7 +85,7 @@ async def test_join_server_by_invalid_invite_code(client: AsyncClient, test_user
 async def test_joining_server_twice(client: AsyncClient, test_user_token, test_server):
     # Define user data for creation
     invite_link = test_server["invite_code"]
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
 
     # Make a POST request to the user creation endpoint using AsyncClient
     response = await client.post(f"/api/v0/servers/join/{invite_link}", headers=headers)
@@ -96,7 +96,7 @@ async def test_joining_server_twice(client: AsyncClient, test_user_token, test_s
 
 @pytest.mark.asyncio
 async def test_leave_server(client: AsyncClient, test_user_token, test_server):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
     server_id = test_server["id"]
     response = await client.post(f"/api/v0/servers/leave/{server_id}", headers=headers)
     assert response.status_code == 200
@@ -104,7 +104,7 @@ async def test_leave_server(client: AsyncClient, test_user_token, test_server):
 
 @pytest.mark.asyncio
 async def test_update_server(client: AsyncClient, test_user_token, test_server):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
     server_id = test_server["id"]
     update_data = {"description": "updatedserver", "is_public": True}
     response = await client.patch(f"/api/v0/servers/{server_id}", json=update_data, headers=headers)
@@ -115,7 +115,7 @@ async def test_update_server(client: AsyncClient, test_user_token, test_server):
 
 @pytest.mark.asyncio
 async def test_update_server_invalid_data(client: AsyncClient, test_user_token, test_server):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
     server_id = test_server["id"]
     update_data = {"description": "updatedserver", "is_public": "invalid"}
     response = await client.patch(f"/api/v0/servers/{server_id}", json=update_data, headers=headers)
@@ -133,7 +133,7 @@ async def test_unauthorized_access(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_server_not_found(client: AsyncClient, test_user_token):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
     response = await client.get("/api/v0/servers/7442e730-e3d2-442e-917d-96de9846989d", headers=headers)
     assert response.status_code == 404
     assert "Server not found" in response.json()["detail"]
@@ -141,7 +141,7 @@ async def test_server_not_found(client: AsyncClient, test_user_token):
 
 @pytest.mark.asyncio
 async def test_update_server_valid_and_invalid_data(client: AsyncClient, test_user_token, test_server):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
     server_id = test_server["id"]
     update_data = {"description": "Valid description", "is_public": "invalid"}
     response = await client.patch(f"/api/v0/servers/{server_id}", json=update_data, headers=headers)
@@ -160,7 +160,7 @@ async def test_updating_server_without_permission(client: AsyncClient, test_user
 
 @pytest.mark.asyncio
 async def get_user_permissions_in_server(client: AsyncClient, test_user_token, test_server):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
     server_id = test_server["id"]
     response = await client.get(f"/api/v0/servers/{server_id}/roles_permissions", headers=headers)
     assert response.status_code == 200
@@ -177,7 +177,7 @@ async def no_permissions_found_for_user(client: AsyncClient, test_user_token2, t
 
 @pytest.mark.asyncio
 async def update_server_with_invalid_id(client: AsyncClient, test_user_token, test_server):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
     update_data = {"description": "updatedserver", "is_public": True}
     response = await client.patch(
         "/api/v0/servers/d51d95ec-e95b-4a57-bc06-4f618baea1f3", json=update_data, headers=headers
@@ -187,7 +187,7 @@ async def update_server_with_invalid_id(client: AsyncClient, test_user_token, te
 
 @pytest.mark.asyncio
 async def test_regenerate_code(client: AsyncClient, test_user_token, test_server):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
     server_id = test_server["id"]
     response = await client.patch(f"/api/v0/servers/regenerate_invite_code/{server_id}", headers=headers)
     assert response.status_code == 200

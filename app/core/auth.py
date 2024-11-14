@@ -8,19 +8,23 @@ from fastapi import HTTPException, status
 from pydantic import BaseModel
 
 from .config import settings
+from .redis import RedisClient
 
-# Secret key for encoding and decoding JWT
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = settings.ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
+REFRESH_TOKEN_EXPIRE_DAYS = settings.REFRESH_TOKEN_EXPIRE_DAYS
+SUDO_TOKEN_EXPIRE_MINUTES = settings.SUDO_TOKEN_EXPIRE_MINUTES
+redis_client = RedisClient()
 
 
 class TokenData(BaseModel):
+    username: str
     id: str
+    exp: int
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    # Ensure the hashed_password is in bytes before checking
     if isinstance(hashed_password, str):
         hashed_password = hashed_password.encode("utf-8")
     return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password)
@@ -30,27 +34,52 @@ def get_password_hash(password: str) -> str:
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+def _create_token(data: dict, expire: datetime.datetime, token_type: str) -> str:
     to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.datetime.now(datetime.UTC) + expires_delta
-    else:
-        expire = datetime.datetime.now(datetime.UTC) + timedelta(minutes=3600)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    to_encode.update({"exp": expire, "type": token_type})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def verify_token(token: str) -> TokenData:
+def create_access_token(data: dict) -> str:
+    expire = datetime.datetime.now(datetime.UTC) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    return _create_token(data, expire, token_type="access")
+
+
+def create_refresh_token(data: dict) -> str:
+    expire = datetime.datetime.now(datetime.UTC) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    return _create_token(data, expire, token_type="refresh")
+
+
+def create_sudo_token(data: dict) -> str:
+    expire = datetime.datetime.now(datetime.UTC) + timedelta(minutes=SUDO_TOKEN_EXPIRE_MINUTES)
+    return _create_token(data, expire, token_type="sudo")
+
+
+async def verify_token(token: str, token_type: Optional[str] = "access") -> TokenData:
+    redis = redis_client.client
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: str = payload.get("sub")
-        if user_id is None:
+        username: str = payload.get("sub")
+        user_id: str = payload.get("id")
+        exp: int = payload.get("exp")
+        if user_id is None or payload.get("type") != token_type:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid authentication credentials",
             )
-        return TokenData(id=user_id)
+
+        # Check if the token is blacklisted
+        if token_type == "access":
+            access_revoked_timestamp = await redis.get(f"blacklist:access:{user_id}")
+            if access_revoked_timestamp is not None:
+                issuance_time = exp - settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+                if issuance_time <= float(access_revoked_timestamp):
+                    raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail="Access token has been blacklisted.",
+                    )
+
+        return TokenData(username=username, id=user_id, exp=exp)
     except jwt.PyJWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

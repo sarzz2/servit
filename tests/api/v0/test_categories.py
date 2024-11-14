@@ -6,7 +6,7 @@ from httpx import AsyncClient
 async def test_create_category(client: AsyncClient, test_user_token, test_server):
     # Define category data for creation
     category_data = {"name": "testcategory"}
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token['access_token']}"}
 
     # Make a POST request to create a category
     response = await client.post(f"/api/v0/category/{test_server['id']}", json=category_data, headers=headers)
@@ -31,7 +31,7 @@ async def test_create_category_unauthorized(client: AsyncClient, test_server):
 
 @pytest.mark.asyncio
 async def test_get_server_categories(client: AsyncClient, test_user_token, test_server):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token['access_token']}"}
     response = await client.get(f"/api/v0/category/{test_server['id']}", headers=headers)
     assert response.status_code == 200
 
@@ -42,7 +42,7 @@ async def test_get_server_categories(client: AsyncClient, test_user_token, test_
 
 @pytest.mark.asyncio
 async def test_update_category(client: AsyncClient, test_user_token, test_server, test_category):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token['access_token']}"}
     category_id = test_category["id"]
     update_data = {"name": "updatedcategory", "position": 1}
 
@@ -60,7 +60,7 @@ async def test_update_category(client: AsyncClient, test_user_token, test_server
 
 @pytest.mark.asyncio
 async def test_update_category_invalid_data(client: AsyncClient, test_user_token, test_server, test_category):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token['access_token']}"}
     category_id = test_category["id"]
     update_data = {"name": "", "position": "invalid"}  # Invalid data
 
@@ -74,7 +74,7 @@ async def test_update_category_invalid_data(client: AsyncClient, test_user_token
 
 @pytest.mark.asyncio
 async def test_delete_category(client: AsyncClient, test_user_token, test_server, test_category):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token['access_token']}"}
     category_id = test_category["id"]
 
     response = await client.delete(f"/api/v0/category/{test_server['id']}/{category_id}", headers=headers)
@@ -101,7 +101,7 @@ async def test_delete_category_without_permission(client: AsyncClient, test_user
 async def test_create_category_invalid_name(client: AsyncClient, test_user_token, test_server):
     # Attempt to create a category with an invalid name
     invalid_names = ["", "a", "x" * 256]  # Empty, too short, too long
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token['access_token']}"}
 
     for name in invalid_names:
         response = await client.post(f"/api/v0/category/{test_server['id']}", json={"name": name}, headers=headers)
@@ -110,7 +110,7 @@ async def test_create_category_invalid_name(client: AsyncClient, test_user_token
 
 @pytest.mark.asyncio
 async def test_update_non_existent_category(client: AsyncClient, test_user_token, test_server):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token['access_token']}"}
     non_existent_id = "7442e730-e3d2-442e-917d-96de9846989d"
     update_data = {"name": "updatedcategory"}
 

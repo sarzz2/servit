@@ -43,7 +43,7 @@ async def test_user_token():
     async with AsyncClient(app=app, base_url="http://test") as client:
         user_data = {"username": "testuser", "password": "testpassword", "email": "test@test.com"}
         token = await test_user_data(user_data, client)
-        return token["access_token"]
+        return token
 
 
 @pytest.fixture(scope="function")
@@ -69,7 +69,7 @@ async def test_category(test_user_token, test_server):
     async with AsyncClient(app=app, base_url="http://test") as client:
         # Define category data for creation
         category_data = {"name": "testcategory"}
-        headers = {"Authorization": f"Bearer {test_user_token}"}
+        headers = {"Authorization": f"Bearer {test_user_token['access_token']}"}
 
         # Make a POST request to create a category
         await client.post(f"/api/v0/category/{test_server['id']}", json=category_data, headers=headers)
@@ -101,7 +101,7 @@ async def test_server(test_user_token):
     async with AsyncClient(app=app, base_url="http://test") as client:
         # Define server data for creation
         server_data = {"name": "testserver"}
-        headers = {"Authorization": f"Bearer {test_user_token}"}
+        headers = {"Authorization": f"Bearer {test_user_token['access_token']}"}
 
         # Make a POST request to the server creation endpoint using AsyncClient
         response = await client.post("/api/v0/servers/", json=server_data, headers=headers)

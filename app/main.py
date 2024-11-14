@@ -75,9 +75,6 @@ app.add_middleware(
 )
 app.add_middleware(GZipMiddleware, minimum_size=1500)
 
-# S3 endpoints for file upload, view and delete
-AWS_BUCKET_NAME = settings.AWS_BUCKET_NAME
-
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
@@ -103,7 +100,7 @@ async def log_requests(request: Request, call_next):
 async def upload_file(request: Request, file: UploadFile = File(...)):
     try:
         unique_key = f"{uuid.uuid4()}_{file.filename}"
-        s3_client.upload_fileobj(file.file, AWS_BUCKET_NAME, unique_key)
+        s3_client.upload_fileobj(file.file, settings.AWS_BUCKET_NAME, unique_key)
         return {
             "url": f"{str(request.base_url)[:-1]}/files/{unique_key}",
             "message": "File uploaded successfully",
@@ -116,7 +113,7 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
 async def get_file(unique_key: str):
     try:
         # Get the object from S3
-        response = s3_client.get_object(Bucket=AWS_BUCKET_NAME, Key=unique_key)
+        response = s3_client.get_object(Bucket=settings.AWS_BUCKET_NAME, Key=unique_key)
         # Guess the content type of the file (like image/jpeg, image/png)
         content_type, _ = guess_type(unique_key.split("_", 1)[1])  # Extract original filename from unique key
         if not content_type:
@@ -129,7 +126,7 @@ async def get_file(unique_key: str):
 @app.delete("/files/{unique_key}")
 async def delete_file(unique_key: str):
     try:
-        s3_client.delete_object(Bucket=AWS_BUCKET_NAME, Key=unique_key)
+        s3_client.delete_object(Bucket=settings.AWS_BUCKET_NAME, Key=unique_key)
         return {"message": f"File '{unique_key}' deleted successfully"}
     except s3_client.exceptions.NoSuchKey:
         return {"error": "File not found"}

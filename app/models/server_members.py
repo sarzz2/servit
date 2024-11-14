@@ -21,9 +21,7 @@ class ServerMembers(DataBase):
           RETURNING *
 
         """
-        x = await cls.execute(query, user_id, server_id, nickname)
-        print(x)
-        return x
+        return await cls.execute(query, user_id, server_id, nickname)
 
     @classmethod
     async def remove_member(cls, user_id: str, server_id: str):

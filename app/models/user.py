@@ -51,7 +51,7 @@ class UserModel(DataBase):
         query = """
             SELECT id, username, email, profile_picture_url
               FROM users
-            WHERE username = $1;
+            WHERE id = $1;
         """
         user = await cls.fetchrow(query, username)
         return dict(user) if user else None
@@ -71,7 +71,6 @@ class UserModel(DataBase):
                  LIMIT 15;
         """
         users = await cls.fetch(query, term, current_user)
-        print(users)
         if users:
             return [dict(user) for user in users]
         return {"message": "No user found"}

@@ -9,7 +9,7 @@ async def test_channel(test_user_token, test_server, test_category):
     async with AsyncClient(app=app, base_url="http://test") as client:
         # Define channel data for creation
         channel_data = {"name": "testchannel", "description": "test description"}
-        headers = {"Authorization": f"Bearer {test_user_token}"}
+        headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
 
         # Make a POST request to create a channel
         await client.post(
@@ -26,7 +26,7 @@ async def test_channel(test_user_token, test_server, test_category):
 async def test_create_channel(client: AsyncClient, test_user_token, test_server, test_category):
     # Define channel data for creation
     channel_data = {"name": "testchannel", "description": "test description"}
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
 
     # Make a POST request to create a channel
     response = await client.post(
@@ -45,7 +45,7 @@ async def test_create_channel(client: AsyncClient, test_user_token, test_server,
 async def test_create_channel_invalid_category_id(client: AsyncClient, test_user_token, test_server, test_category):
     # Define channel data for creation
     channel_data = {"name": "testchannel", "description": "test description"}
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
 
     # Make a POST request to create a channel
     response = await client.post(
@@ -70,7 +70,7 @@ async def test_create_channel_unauthorized(client: AsyncClient, test_server, tes
 
 @pytest.mark.asyncio
 async def test_get_category_channels(client: AsyncClient, test_user_token, test_server, test_category):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
     response = await client.get(f"/api/v0/channels/{test_server['id']}/{test_category['id']}", headers=headers)
     assert response.status_code == 200
 
@@ -83,7 +83,7 @@ async def test_get_category_channels(client: AsyncClient, test_user_token, test_
 async def test_update_channel(client: AsyncClient, test_user_token, test_server, test_category, test_channel):
     # Define channel data for update
     channel_data = {"name": "updatedchannel", "description": "updated description"}
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
 
     # Make a PATCH request to update a channel
     response = await client.patch(
@@ -99,7 +99,7 @@ async def test_update_channel(client: AsyncClient, test_user_token, test_server,
 @pytest.mark.asyncio
 async def test_update_invalid_channel_id(client: AsyncClient, test_server, test_user_token, test_channel):
     channel_data = {"name": "updatedchannel", "description": "updated description"}
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
     # Passing server id as channel id to simulate invalid id
     response = await client.patch(
         f"/api/v0/channels/{test_server['id']}/{test_server['id']}", json=channel_data, headers=headers
@@ -119,14 +119,14 @@ async def test_update_channel_unauthorized(client: AsyncClient, test_server, tes
 
 @pytest.mark.asyncio
 async def test_delete_channel(client: AsyncClient, test_user_token, test_server, test_channel):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
     response = await client.delete(f"/api/v0/channels/{test_server['id']}/{test_channel['id']}", headers=headers)
     assert response.status_code == 200
 
 
 @pytest.mark.asyncio
 async def test_delete_invalid_channel(client: AsyncClient, test_user_token, test_server, test_channel):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
     response = await client.delete(f"/api/v0/channels/{test_server['id']}/{test_server['id']}", headers=headers)
     assert response.status_code == 400
 

@@ -7,7 +7,9 @@ class Settings(BaseSettings):
     API_V0_STR: str = "/api/v0"
     SECRET_KEY: str = "test_secret_key"
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 3000
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 336
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 21
+    SUDO_TOKEN_EXPIRE_MINUTES: int = 60
     DATABASE_URL: str = "postgresql://user:password@localhost/servit"
     TEST_DATABASE_URL: str = "postgresql://user:password@localhost/test_servit"
     # default values for localstack

@@ -29,7 +29,7 @@ async def test_send_friend_request(client: AsyncClient, test_user_token2, test_u
 
 @pytest.mark.asyncio
 async def test_send_friend_request_to_self(client: AsyncClient, test_user_token, test_user):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
     response = await client.post(f"/api/v0/friends/{test_user['id']}", headers=headers)
 
     assert response.status_code == 400
@@ -38,7 +38,7 @@ async def test_send_friend_request_to_self(client: AsyncClient, test_user_token,
 
 @pytest.mark.asyncio
 async def test_send_duplicate_friend_request(client: AsyncClient, test_user_token, test_friend):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
     friend_id = test_friend["id"]
 
     # Send the first request
@@ -52,7 +52,7 @@ async def test_send_duplicate_friend_request(client: AsyncClient, test_user_toke
 
 @pytest.mark.asyncio
 async def test_get_friends(client: AsyncClient, test_user_token):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
     response = await client.get("/api/v0/friends/", headers=headers)
 
     assert response.status_code == 200
@@ -61,7 +61,7 @@ async def test_get_friends(client: AsyncClient, test_user_token):
 
 @pytest.mark.asyncio
 async def test_get_friend_requests(client: AsyncClient, test_user_token):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
     response = await client.get("/api/v0/friends/requests", headers=headers)
 
     assert response.status_code == 200
@@ -73,7 +73,7 @@ async def test_update_friend_status(client: AsyncClient, test_user_token, test_f
     headers = {"Authorization": f"Bearer {test_user_token2}"}
     await client.post(f"/api/v0/friends/{test_user['id']}", headers=headers)
 
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
     friend_id = test_friend["id"]
 
     response = await client.patch(f"/api/v0/friends/{friend_id}/accepted", headers=headers)
@@ -84,7 +84,7 @@ async def test_update_friend_status(client: AsyncClient, test_user_token, test_f
 
 @pytest.mark.asyncio
 async def test_update_friend_status_invalid(client: AsyncClient, test_user_token, test_friend):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
     friend_id = test_friend["id"]
 
     response = await client.patch(f"/api/v0/friends/{friend_id}/invalid_status", headers=headers)
@@ -95,7 +95,7 @@ async def test_update_friend_status_invalid(client: AsyncClient, test_user_token
 
 @pytest.mark.asyncio
 async def test_update_invalid_user(client: AsyncClient, test_user_token, test_friend):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
     friend_id = test_friend["id"]
 
     response = await client.patch(f"/api/v0/friends/{friend_id}/accepted", headers=headers)
@@ -109,7 +109,7 @@ async def test_remove_friend(client: AsyncClient, test_user_token, test_friend, 
     headers = {"Authorization": f"Bearer {test_user_token2}"}
     await client.post(f"/api/v0/friends/{test_user['id']}", headers=headers)
 
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
     friend_id = test_friend["id"]
     await client.patch(f"/api/v0/friends/{friend_id}/accepted", headers=headers)
 
@@ -120,7 +120,7 @@ async def test_remove_friend(client: AsyncClient, test_user_token, test_friend, 
 
 @pytest.mark.asyncio
 async def test_remove_nonexistent_friend(client: AsyncClient, test_user_token):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
     invalid_friend_id = "00000000-0000-0000-0000-000000000000"
 
     response = await client.delete(f"/api/v0/friends/{invalid_friend_id}", headers=headers)
@@ -150,6 +150,6 @@ async def test_cancel_invalid_friend_request(client: AsyncClient, test_user_toke
 
 @pytest.mark.asyncio
 async def test_get_blocked_friends(client: AsyncClient, test_user_token):
-    headers = {"Authorization": f"Bearer {test_user_token}"}
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
     response = await client.get("/api/v0/friends/blocked", headers=headers)
     assert response.status_code == 200

@@ -35,7 +35,6 @@ async def test_login_user(client: AsyncClient):
     # Verify the access token in the response
     data = response.json()
     assert "access_token" in data
-    assert data["token_type"] == "bearer"
 
 
 @pytest.mark.asyncio
@@ -79,7 +78,9 @@ async def test_invalid_token(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_search_user(client: AsyncClient, test_user_token):
-    response = await client.get("/api/v0/users/search/test", headers={"Authorization": f"Bearer {test_user_token}"})
+    response = await client.get(
+        "/api/v0/users/search/test", headers={"Authorization": f"Bearer {test_user_token["access_token"]}"}
+    )
     assert response.status_code == 200
 
 
@@ -87,6 +88,63 @@ async def test_search_user(client: AsyncClient, test_user_token):
 async def test_update_user(client: AsyncClient, test_user_token):
     updated_data = {"email": "updated@test.com"}
     response = await client.patch(
-        "/api/v0/users/update", headers={"Authorization": f"Bearer {test_user_token}"}, json=updated_data
+        "/api/v0/users/update",
+        headers={"Authorization": f"Bearer {test_user_token["access_token"]}"},
+        json=updated_data,
     )
     assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_refresh_token(client: AsyncClient, test_user_token):
+    response = await client.post(
+        "/api/v0/users/token/refresh", headers={"refresh-token": test_user_token["refresh_token"]}
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_invalid_refresh_token(client: AsyncClient):
+    response = await client.post("/api/v0/users/token/refresh", headers={"refresh-token": "invalid_refresh_token"})
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_refresh_token_after_logout(client: AsyncClient, test_user_token):
+    logout_response = await client.post(
+        "/api/v0/users/logout/all", headers={"Authorization": f"Bearer {test_user_token['access_token']}"}
+    )
+    assert logout_response.status_code == 200
+
+    response = await client.post(
+        "/api/v0/users/token/refresh", headers={"refresh-token": test_user_token["refresh_token"]}
+    )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Refresh token is invalid because the user has logged out from all devices."
+
+
+@pytest.mark.asyncio
+async def test_access_token_after_logout(client: AsyncClient, test_user_token):
+    logout_response = await client.post(
+        "/api/v0/users/logout/all", headers={"Authorization": f"Bearer {test_user_token['access_token']}"}
+    )
+    assert logout_response.status_code == 200
+
+    response = await client.get("/api/v0/users/me")
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Not authenticated"
+
+
+@pytest.mark.asyncio
+async def test_get_sudo_token(client: AsyncClient, test_user_token):
+    await register_user(username="loginuser", email="loginuser@example.com", password="testpassword@123")
+
+    # Make a POST request to the login endpoint using AsyncClient
+    response = await client.post(
+        "/api/v0/users/token/sudo",
+        json={"username": "loginuser", "password": "testpassword@123"},
+        headers={"Authorization": f"Bearer {test_user_token['access_token']}"},
+    )
+    assert response.status_code == 200
+    assert "sudo_token" in response.json()
