@@ -140,7 +140,6 @@ async def test_access_token_after_logout(client: AsyncClient, test_user_token):
 async def test_get_sudo_token(client: AsyncClient, test_user_token):
     await register_user(username="loginuser", email="loginuser@example.com", password="testpassword@123")
 
-    # Make a POST request to the login endpoint using AsyncClient
     response = await client.post(
         "/api/v0/users/token/sudo",
         json={"username": "loginuser", "password": "testpassword@123"},
@@ -148,3 +147,23 @@ async def test_get_sudo_token(client: AsyncClient, test_user_token):
     )
     assert response.status_code == 200
     assert "sudo_token" in response.json()
+
+
+@pytest.mark.asyncio
+async def test_change_password(client: AsyncClient, test_user_token):
+    await register_user(username="loginuser", email="loginuser@example.com", password="testpassword@123")
+
+    response = await client.post(
+        "/api/v0/users/token/sudo",
+        json={"username": "loginuser", "password": "testpassword@123"},
+        headers={"Authorization": f"Bearer {test_user_token['access_token']}"},
+    )
+
+    update_password_response = await client.patch(
+        "/api/v0/users/change_password",
+        json={"new_password": "new_password", "current_password": "testpassword@123"},
+        headers={"Authorization": f"Bearer {response.json()['sudo_token']}"},
+    )
+
+    assert update_password_response.status_code == 200
+    assert update_password_response.json()["detail"] == "Password changed successfully."

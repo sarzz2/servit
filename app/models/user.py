@@ -76,6 +76,20 @@ class UserModel(DataBase):
         return {"message": "No user found"}
 
 
+class SudoUserModel(UserModel):
+    password: str
+
+    @classmethod
+    async def get_user(cls, username: str) -> dict:
+        query = """
+                  SELECT *
+                    FROM users
+                  WHERE id = $1;
+              """
+        user = await cls.fetchrow(query, username)
+        return dict(user) if user else None
+
+
 class UserUpdate(DataBase):
     username: Optional[str]
     email: Optional[EmailStr]
@@ -93,3 +107,16 @@ class UserUpdate(DataBase):
             """
         values = list(kwargs.values())
         return await cls.fetchrow(query, user_id, *values)
+
+
+class ChangePassword(DataBase):
+    new_password: str
+    current_password: str
+
+    @classmethod
+    async def change_password(cls, new_password: str, user_id: str):
+        query = """
+            UPDATE users SET password = $1
+             WHERE id = $2
+            """
+        return await cls.execute(query, new_password, user_id)

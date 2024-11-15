@@ -10,12 +10,24 @@ from app.core.auth import (
     create_access_token,
     create_refresh_token,
     create_sudo_token,
+    verify_password,
     verify_token,
 )
 from app.core.config import settings
-from app.core.dependencies import get_current_user, get_redis
-from app.models.user import UserIn, UserLogin, UserModel, UserUpdate
-from app.services.v0.user_service import authenticate_user, register_user
+from app.core.dependencies import get_current_user, get_redis, get_sudo_user
+from app.models.user import (
+    ChangePassword,
+    SudoUserModel,
+    UserIn,
+    UserLogin,
+    UserModel,
+    UserUpdate,
+)
+from app.services.v0.user_service import (
+    authenticate_user,
+    register_user,
+    update_user_password,
+)
 
 log = logging.getLogger("fastapi")
 
@@ -66,7 +78,10 @@ async def validate_refresh_token(refresh_token: str = Header(...), redis: Redis 
                 status_code=401, detail="Refresh token is invalid because the user has logged out from all devices."
             )
 
-    return {"access_token": create_access_token(data={"sub": token_data.username, "id": str(token_data.id)})}
+    return {
+        "access_token": create_access_token(data={"sub": token_data.username, "id": str(token_data.id)}),
+        "refresh_token": create_refresh_token(data={"sub": token_data.username, "id": str(token_data.id)}),
+    }
 
 
 @protected_router.post("/token/sudo")
@@ -110,6 +125,21 @@ async def update_current_user(request: Request, current_user: UserModel = Depend
     except asyncpg.UniqueViolationError as e:
         raise HTTPException(status_code=400, detail=e.detail)
     return user
+
+
+@router.patch("/change_password")
+async def change_user_password(
+    change_password: ChangePassword,
+    current_user: SudoUserModel = Depends(get_sudo_user),
+):
+    # Verify the current password
+    current_user_password = await SudoUserModel.get_user(current_user["id"])
+    if not verify_password(change_password.current_password, current_user_password["password"]):
+        log.debug("ge")
+        raise HTTPException(status_code=401, detail="Current password is incorrect.")
+    await update_user_password(change_password.new_password, current_user["id"])
+
+    return {"detail": "Password changed successfully."}
 
 
 @protected_router.post("/logout/all")

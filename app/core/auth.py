@@ -22,6 +22,7 @@ class TokenData(BaseModel):
     username: str
     id: str
     exp: int
+    type: str
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -62,6 +63,7 @@ async def verify_token(token: str, token_type: Optional[str] = "access") -> Toke
         username: str = payload.get("sub")
         user_id: str = payload.get("id")
         exp: int = payload.get("exp")
+        jwt_token_type: str = payload.get("type")
         if user_id is None or payload.get("type") != token_type:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -79,7 +81,7 @@ async def verify_token(token: str, token_type: Optional[str] = "access") -> Toke
                         detail="Access token has been blacklisted.",
                     )
 
-        return TokenData(username=username, id=user_id, exp=exp)
+        return TokenData(username=username, id=user_id, exp=exp, type=jwt_token_type)
     except jwt.PyJWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
