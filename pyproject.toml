@@ -28,7 +28,7 @@ python-multipart = "^0.0.16"
 fastapi-cli = "^0.0.5"
 coverage = "^7.6.3"
 slowapi = "^0.1.9"
-redis= "^5.2.0"
+redis= "^5.2.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"
