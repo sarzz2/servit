@@ -48,7 +48,7 @@ async def update_server(server_id: str, **kwargs):
 async def get_user_roles_permissions(user_id, server_id):
     query = """
                 WITH user_roles AS (
-              SELECT r.id AS role_id, r.name AS role_name
+              SELECT r.id AS role_id, r.name AS role_name, r.description AS role_description, r.color AS role_color
                 FROM server_user_roles sur
                 JOIN server_roles r ON r.id = sur.role_id
                WHERE sur.user_id = $1 AND r.server_id = $2
@@ -64,10 +64,11 @@ async def get_user_roles_permissions(user_id, server_id):
                WHERE s.owner_id = $1 AND s.id = $2
                LIMIT 1
                 )
-              SELECT ur.role_id, ur.role_name, rp.permission_id, rp.permission_name
+              SELECT ur.role_id, ur.role_name, ur.role_description, ur.role_color, rp.permission_id, rp.permission_name
                 FROM user_roles ur
            LEFT JOIN role_permissions rp ON rp.role_id = ur.role_id UNION ALL
-              SELECT NULL AS role_id, NULL AS role_name, p.id AS permission_id, p.name AS permission_name
+              SELECT NULL AS role_id, NULL AS role_name, NULL AS role_description, NULL AS role_color,
+                     p.id AS permission_id, p.name AS permission_name
                 FROM server_permissions p
                WHERE p.name = 'OWNER' AND EXISTS (SELECT 1 FROM is_owner);
         """
@@ -79,7 +80,12 @@ async def get_user_roles_permissions(user_id, server_id):
     for record in records:
         # Add unique roles
         if record["role_id"] and record["role_name"]:
-            unique_roles[record["role_name"]] = ServerRolesOut(id=record["role_id"], name=record["role_name"])
+            unique_roles[record["role_name"]] = ServerRolesOut(
+                id=record["role_id"],
+                name=record["role_name"],
+                description=record["role_description"],
+                color=record["role_color"],
+            )
 
         # Add unique permissions
         if record["permission_id"] and record["permission_name"]:
