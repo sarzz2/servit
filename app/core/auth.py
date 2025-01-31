@@ -5,6 +5,7 @@ from typing import Optional
 import bcrypt
 import jwt
 from fastapi import HTTPException, status
+from jose import JWTError
 from pydantic import BaseModel
 
 from .config import settings
@@ -87,3 +88,18 @@ async def verify_token(token: str, token_type: Optional[str] = "access") -> Toke
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",
         )
+
+
+def create_verification_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.datetime.now() + timedelta(hours=24)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def verify_verification_token(token: str):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload
+    except JWTError:
+        return None

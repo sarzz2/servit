@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Welcome {{ username }}! 👋</h2>
+<p>Please verify your email address to complete your registration:</p>
+<a href="{{ verification_url }}" class="button">Verify Email</a>
+<p style="margin-top: 20px;">Or copy this link to your browser:</p>
+<code>{{ verification_url }}</code>
+<p style="margin-top: 30px; color: #666;">
+    This link will expire in 24 hours. If you didn't request this, please ignore this email.
+</p>
+{% endblock %}

@@ -1,4 +1,3 @@
-import uuid
 from typing import Optional
 
 from pydantic import UUID4, EmailStr, Field
@@ -8,9 +7,10 @@ from app.core.database import DataBase
 
 
 class UserIn(DataBase):
-    id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()))
+    id: Optional[str] = Field(None)
     username: str = Field(..., min_length=3, max_length=50)
     email: EmailStr = Field(...)
+    is_verified: bool = Field(default=False)
     password: str = Field(..., min_length=8)
     profile_picture_url: Optional[str] = Field(default=None)
 
@@ -18,9 +18,19 @@ class UserIn(DataBase):
     async def create_user(cls, username: str, email: str, password: str):
         query = """
             INSERT INTO users (username, email, password)
-                 VALUES ($1, $2, $3);
+                 VALUES ($1, $2, $3)
+                 RETURNING id;
         """
-        return await cls.execute(query, username, email, get_password_hash(password))
+        return await cls.fetchval(query, username, email, get_password_hash(password))
+
+    @classmethod
+    async def verify_user(cls, username: str):
+        query = """
+                UPDATE users
+                SET is_verified = TRUE
+                WHERE username = $1
+            """
+        return await cls.execute(query, username)
 
 
 class UserLogin(DataBase):
@@ -43,17 +53,28 @@ class UserModel(DataBase):
     id: UUID4
     username: str
     email: EmailStr
+    is_verified: bool
     profile_picture_url: Optional[str]
     status: Optional[str] = None
 
     @classmethod
     async def get_user(cls, username: str) -> dict:
         query = """
-            SELECT id, username, email, profile_picture_url
+            SELECT id, username, email, profile_picture_url, is_verified
               FROM users
             WHERE id = $1;
         """
         user = await cls.fetchrow(query, username)
+        return dict(user) if user else None
+
+    @classmethod
+    async def get_user_by_email(cls, email: str) -> dict:
+        query = """
+            SELECT id, username, email, profile_picture_url, is_verified
+              FROM users
+            WHERE email = $1;
+        """
+        user = await cls.fetchrow(query, email)
         return dict(user) if user else None
 
     @classmethod

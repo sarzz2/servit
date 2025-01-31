@@ -4,6 +4,8 @@ from pydantic.v1 import BaseSettings
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Servit"
     PROJECT_VERSION: str = "0.1.0"
+    BASE_URL: str = "localhost:8000"
+    ENV: str = "local"
     API_V0_STR: str = "/api/v0"
     SECRET_KEY: str = "test_secret_key"
     ALGORITHM: str = "HS256"
@@ -18,6 +20,8 @@ class Settings(BaseSettings):
     AWS_ACCESS_KEY: str = "test"
     AWS_SECRET_ACCESS_KEY: str = "test"
     AWS_BUCKET_NAME: str = "my-bucket"
+    MAILGUN_API_KEY: str = ""
+    MAILGUN_DOMAIN: str = ""
 
     class Config:
         env_file = ".env"

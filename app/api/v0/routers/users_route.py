@@ -2,19 +2,23 @@ import logging
 from datetime import datetime
 
 import asyncpg
-from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request
 from redis.asyncio import Redis
 from starlette import status
 
+from app.api.v0.routers import limiter
 from app.core.auth import (
     create_access_token,
     create_refresh_token,
     create_sudo_token,
+    create_verification_token,
     verify_password,
     verify_token,
+    verify_verification_token,
 )
 from app.core.config import settings
 from app.core.dependencies import get_current_user, get_redis, get_sudo_user
+from app.core.email import MailgunService
 from app.models.user import (
     ChangePassword,
     SudoUserModel,
@@ -27,26 +31,65 @@ from app.services.v0.user_service import (
     authenticate_user,
     register_user,
     update_user_password,
+    verify_user,
 )
 
 log = logging.getLogger("fastapi")
 
 router = APIRouter()
 protected_router = APIRouter(dependencies=[Depends(get_current_user)])
+mailgun_service = MailgunService()
 
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
-async def register(user: UserIn):
+async def register(user: UserIn, background_tasks: BackgroundTasks):
     """
     Register a new user
     """
     try:
-        await register_user(user.username, user.email, user.password)
+        user_id = await register_user(user.username, user.email, user.password)
+        verification_token = create_verification_token(
+            {"sub": str(user.username), "id": str(user_id), "email": user.email}
+        )
+        background_tasks.add_task(
+            mailgun_service.send_verification_email, user.email, verification_token, user.username
+        )
     except asyncpg.UniqueViolationError as e:
         raise HTTPException(status_code=400, detail=e.detail)
-    access_token = create_access_token(data={"sub": user.username, "id": str(user.id)})
-    refresh_token = create_refresh_token(data={"sub": user.username, "id": str(user.id)})
+    return {"message": "Registration successful. Please check your email for verification."}
+
+
+@router.get("/verify-email/{token}")
+async def verify_email(token: str):
+    payload = verify_verification_token(token)
+    if not payload:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired token")
+
+    user_id = payload.get("id")
+    username = payload.get("sub")
+    await verify_user(username)
+    access_token = create_access_token(data={"sub": username, "id": user_id})
+    refresh_token = create_refresh_token(data={"sub": username, "id": user_id})
     return {"access_token": access_token, "refresh_token": refresh_token}
+
+
+@router.post("/resend-verification")
+@limiter.limit("2/30minute")
+async def resend_verification(request: Request, email: str, background_tasks: BackgroundTasks):
+    user = await UserModel.get_user_by_email(email)
+
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    if user["is_verified"]:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already verified")
+
+    verification_token = create_verification_token({"sub": str(user["id"]), "email": user["email"]})
+
+    background_tasks.add_task(
+        mailgun_service.send_verification_email, user["email"], verification_token, user["username"]
+    )
+    return {"message": "Verification email resent successfully"}
 
 
 @router.post("/login")

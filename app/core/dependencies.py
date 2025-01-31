@@ -24,6 +24,12 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         user = await UserModel.get_user(token_data.id)
         if user is None:
             raise credentials_exception
+        if not user["is_verified"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Email Not Verified",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
         return user
     except HTTPException:
         raise credentials_exception

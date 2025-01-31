@@ -11,6 +11,10 @@ async def register_user(username: str, email: str, password: str) -> dict:
     return await UserIn.create_user(username, email, password)
 
 
+async def verify_user(username: str):
+    return await UserIn.verify_user(username)
+
+
 async def authenticate_user(username: str, password: str) -> Optional[dict]:
     user = await UserLogin.get_user_by_username(username=username)
     if user and verify_password(password, user["password"]):
