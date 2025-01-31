@@ -85,6 +85,7 @@ async def get_user_roles_permissions(user_id, server_id):
                 name=record["role_name"],
                 description=record["role_description"],
                 color=record["role_color"],
+                permissions="",
             )
 
         # Add unique permissions
@@ -104,3 +105,19 @@ async def get_user_roles_permissions(user_id, server_id):
 
 async def regenerate_invite_code(server_id: str):
     return await ServerUpdate.regenerate_invite_code(server_id)
+
+
+async def get_all_server_users(server_id: str):
+    query = """
+        SELECT * FROM server_members
+         WHERE server_id = $1;
+    """
+    return await DataBase.fetch(query, server_id)
+
+
+async def kick_user(server_id: str, user_id: List[str]):
+    query = """
+        DELETE FROM server_members
+              WHERE server_id = $1 AND user_id = ANY($2::uuid[]);
+        """
+    return await DataBase.execute(query, server_id, user_id)

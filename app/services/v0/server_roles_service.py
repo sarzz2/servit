@@ -5,6 +5,7 @@ from fastapi.exceptions import HTTPException
 from starlette import status
 
 from app.models.server_roles import ServerRolesIn, ServerRolesOut, ServerRoleUpdate
+from app.models.server_user_roles import ServerUserRolesIn
 
 
 async def create_role(server_id: UUID, name: str, description: str, color: str, permissions: List[str]):
@@ -26,3 +27,11 @@ async def delete_role(role_id: UUID):
     if await ServerRolesIn.delete_role(role_id):
         return
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Role with given id does not exist.")
+
+
+async def assign_role(role_id: UUID, server_id: UUID, user_id: UUID):
+    return await ServerUserRolesIn.assign_role_to_user(user_id, role_id, server_id)
+
+
+async def remove_role(role_id: UUID, server_id: UUID, user_id: UUID):
+    return await ServerUserRolesIn.remove_role_from_user(user_id, role_id, server_id)

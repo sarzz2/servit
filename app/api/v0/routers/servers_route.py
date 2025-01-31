@@ -1,7 +1,9 @@
 import logging
+from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from starlette import status
+from starlette.responses import JSONResponse
 
 from app.api.v0.routers import limiter
 from app.core.dependencies import get_current_user
@@ -10,10 +12,12 @@ from app.models.user import UserModel
 from app.services.v0.permission_service import check_permissions
 from app.services.v0.server_service import (
     create_server,
+    get_all_server_users,
     get_all_user_servers,
     get_server_details_by_id,
     get_user_roles_permissions,
     join_server,
+    kick_user,
     leave_server,
     regenerate_invite_code,
     update_server,
@@ -113,3 +117,22 @@ async def re_generate_invite_code(
     """Create a new invite code for the server"""
     response = await regenerate_invite_code(server_id)
     return {"server_id": server_id, "invite_code": response}
+
+
+@router.get("/all_users/{server_id}", status_code=status.HTTP_200_OK)
+async def get_server_users(server_id: str):
+    """Get list of all users in a server"""
+    response = await get_all_server_users(server_id)
+    return response
+
+
+@router.post("/kick_user/{server_id}", status_code=status.HTTP_200_OK)
+@check_permissions(["MANAGE_SERVER", "ADMINISTRATOR", "KICK_MEMBERS", "BAN_MEMBERS"])
+async def kick_server_user(
+    request: Request, server_id: str, user_ids: List[str], current_user: UserModel = Depends(get_current_user)
+):
+    """Kick a list of users from the server"""
+    response = await kick_user(server_id, user_ids)
+    if response == "DELETE 0":
+        return JSONResponse({"message": "User does not exist"}, status_code=status.HTTP_400_BAD_REQUEST)
+    return {"message": "user kicked from server successfully"}

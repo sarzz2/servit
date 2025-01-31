@@ -3,15 +3,18 @@ from uuid import UUID
 import asyncpg
 from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
+from starlette.responses import JSONResponse
 
 from app.core.dependencies import get_current_user
 from app.models.server_roles import ServerRolesIn, ServerRoleUpdate
 from app.models.user import UserModel
 from app.services.v0.permission_service import check_permissions
 from app.services.v0.server_roles_service import (
+    assign_role,
     create_role,
     delete_role,
     get_role,
+    remove_role,
     update_role,
 )
 
@@ -81,3 +84,28 @@ async def delete_server_role(role_id: UUID, server_id: UUID, current_user: UserM
     """
     await delete_role(role_id)
     return {"message": "Role deleted successfully"}
+
+
+@router.post("/{server_id}/{role_id}/{user_id}")
+@check_permissions(["MANAGE_ROLES", "MANAGE_SERVER", "ADMINISTRATOR"])
+async def assign_role_to_user(
+    role_id: UUID, server_id: UUID, user_id: UUID, current_user: UserModel = Depends(get_current_user)
+):
+    """Assign a role to the user"""
+    try:
+        if await assign_role(role_id, server_id, user_id):
+            return {"message": "Role assigned successfully to user"}
+        return JSONResponse({"error": "User does not exist in server"}, status_code=status.HTTP_400_BAD_REQUEST)
+    except asyncpg.exceptions.UniqueViolationError:
+        return JSONResponse({"error": "User already has the role"}, status_code=status.HTTP_409_CONFLICT)
+
+
+@router.delete("/{server_id}/{role_id}/{user_id}")
+@check_permissions(["MANAGE_ROLES", "MANAGE_SERVER", "ADMINISTRATOR"])
+async def remove_role_from_user(
+    role_id: UUID, server_id: UUID, user_id: UUID, current_user: UserModel = Depends(get_current_user)
+):
+    """Remove a role to the user"""
+    if await remove_role(role_id, server_id, user_id):
+        return {"message": "Role removed successfully from user"}
+    return JSONResponse({"error": "User does not exist in server"}, status_code=status.HTTP_400_BAD_REQUEST)

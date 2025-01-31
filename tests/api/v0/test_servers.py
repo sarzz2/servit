@@ -191,3 +191,12 @@ async def test_regenerate_code(client: AsyncClient, test_user_token, test_server
     server_id = test_server["id"]
     response = await client.patch(f"/api/v0/servers/regenerate_invite_code/{server_id}", headers=headers)
     assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_kick_server_user(client: AsyncClient, test_user_token, test_server, test_user):
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
+    server_id = test_server["id"]
+    body = [test_user["id"]]
+    response = await client.post(f"/api/v0/servers/kick_user/{server_id}", headers=headers, json=body)
+    assert response.status_code == 200

@@ -30,7 +30,7 @@ cd servit
 poetry install
 ```
 
-### 3. Create a `.env` file in the root directory and add the following environment variables:
+### 3. Create a `.env` file in the root directory and add the following environment variables(check .env.example for full variable list):
 
 ```bash
 SECRET_KEY=your-secret-key
@@ -58,7 +58,10 @@ poetry run pre-commit install
 ```
 This will run the checks defined in `.pre-commit-config.yaml` before every commit to ensure that the code is properly formatted and linted.
 
+To run precommit before commiting
 ```bash
+precommit
+```
 5. Run the server
 
 ```bash
