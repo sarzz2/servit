@@ -32,6 +32,7 @@ redis= "^5.2.0"
 requests = "^2.32.3"
 premailer = "^3.10.0"
 jinja2 = "^3.1.5"
+prometheus-client = "^0.21.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"

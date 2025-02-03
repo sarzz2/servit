@@ -89,3 +89,8 @@ poetry run isort .
 poetry run black .
 poetry run flake8
 ```
+
+## Monitoring
+You can monitor the application using the following tools:
+- [Prometheus](https://prometheus.io/)
+- [Grafana](https://grafana.com/)

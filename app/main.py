@@ -1,3 +1,5 @@
+import asyncio
+import re
 import sys
 import time
 import uuid
@@ -20,6 +22,14 @@ from app.core.config import settings
 from app.core.database import DataBase
 from app.core.dependencies import redis_client
 from app.core.logging_config import configure_logging
+from app.core.metrics import (
+    REQUEST_COUNT,
+    REQUEST_HISTOGRAM,
+    REQUEST_IN_PROGRESS,
+    REQUEST_LATENCY,
+)
+from app.core.metrics import router as metrics_router
+from app.core.metrics import update_system_metrics
 from migrate import check_all_migrations_applied
 
 logger = configure_logging()
@@ -34,6 +44,7 @@ async def lifespan(app: FastAPI):
     if not all_migrations_applied_check:
         logger.critical("You have pending migrations")
         raise RuntimeError("You have pending migrations")
+    asyncio.create_task(update_system_metrics())
     yield
     await database_instance.close_pool()
     await redis_client.close()
@@ -53,6 +64,32 @@ app = FastAPI(
 )
 
 app.state.limiter = limiter
+app.include_router(metrics_router)
+
+
+# Middleware to collect request metrics
+@app.middleware("http")
+async def track_metrics(request: Request, call_next):
+    if request.url.path == "/metrics":
+        return await call_next(request)
+    start_time = time.time()
+    REQUEST_IN_PROGRESS.inc()  # Increment in-progress requests
+    sanitized_path = re.sub(
+        r"/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}|\d+)",
+        r"/{id}",
+        request.url.path,
+    )
+
+    response = await call_next(request)
+
+    process_time = time.time() - start_time
+    REQUEST_LATENCY.observe(process_time)
+    REQUEST_HISTOGRAM.labels(endpoint=sanitized_path).observe(process_time)
+
+    REQUEST_COUNT.labels(method=request.method, endpoint=sanitized_path, status_code=response.status_code).inc()
+    REQUEST_IN_PROGRESS.dec()  # Decrement after completion
+
+    return response
 
 
 @app.exception_handler(RateLimitExceeded)
@@ -65,9 +102,7 @@ async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
 
 app.include_router(api_router, prefix=settings.API_V0_STR)
 
-origins = [
-    "http://localhost:3000",
-]
+origins = ["http://localhost:3000", "http://localhost:3001"]
 
 # Add CORS middleware to the FastAPI application
 app.add_middleware(
