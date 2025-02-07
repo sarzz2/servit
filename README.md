@@ -62,7 +62,7 @@ To run precommit before commiting
 ```bash
 precommit
 ```
-5. Run the server
+### 6. Run the server
 
 ```bash
 uvicorn app.main:app --reload
@@ -72,7 +72,22 @@ or
 fastapi run dev
 ```
 
-### 6. Open the browser and go to `http://localhost:8000/docs` to view the API documentation.
+### 7. Open the browser and go to `http://localhost:8000/docs` to view the API documentation.
+
+
+## Background Worker
+
+This project is using celery with RabbitMQ to run background tasks.
+
+
+To run celery beat & worker :-
+```bash
+ celery -A app.celery_app.celery_app worker --loglevel=debug
+```
+
+```bash
+ celery -A app.celery_app.celery_app worker --loglevel=debug
+```
 
 ## Testing
 You can run tests using pytest:
