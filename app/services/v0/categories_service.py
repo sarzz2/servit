@@ -26,6 +26,11 @@ async def get_categories(server_id: str, redis):
     return categories
 
 
+async def get_category_by_id(server_id: str, category_id: str):
+    categories = await CategoriesOut.get_category_by_id(server_id, category_id)
+    return categories
+
+
 async def update_categories(server_id, category_id, redis, name=None, position=None):
     await redis.delete(f"server:{server_id}:categories")
     return await CategoriesUpdate.update_category(category_id, name, position)

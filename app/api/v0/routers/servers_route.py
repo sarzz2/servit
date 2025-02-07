@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import List
 
@@ -5,10 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from starlette import status
 from starlette.responses import JSONResponse
 
+from app import constants
 from app.api.v0.routers import limiter
 from app.core.dependencies import get_current_user
 from app.models.server import ServerIn, ServerUpdate
 from app.models.user import UserModel
+from app.services.v0.audit_log_service import insert_audit_log
 from app.services.v0.permission_service import check_permissions
 from app.services.v0.server_service import (
     create_server,
@@ -103,8 +106,23 @@ async def update_server_by_id(
 ):
     """Update server details"""
     update_data = await request.json()
+    existing_server = (await get_server_details_by_id(server_id)).model_dump()
+    changes = {
+        key: {"before": existing_server[key], "after": value}
+        for key, value in update_data.items()
+        if existing_server.get(key) != value
+    }
+
     await update_server(server_id, **update_data)
     updated_fields = {key: value for key, value in update_data.items() if value is not None}
+    if changes:
+        await insert_audit_log(
+            user_id=current_user["id"],
+            entity="server",
+            entity_id=server_id,
+            action=constants.UPDATE,
+            changes=json.dumps(changes),
+        )
     return {"message": "Successfully updated server", "server": updated_fields}
 
 
@@ -115,7 +133,17 @@ async def re_generate_invite_code(
     request: Request, server_id: str, current_user: UserModel = Depends(get_current_user)
 ):
     """Create a new invite code for the server"""
+    existing_server = (await get_server_details_by_id(server_id)).model_dump()
+    old_invite_code = existing_server["invite_code"]
+
     response = await regenerate_invite_code(server_id)
+    await insert_audit_log(
+        user_id=current_user["id"],
+        entity="server",
+        entity_id=server_id,
+        action=constants.UPDATE,
+        changes=json.dumps({"invite_code": {"before": old_invite_code, "after": response}}),
+    )
     return {"server_id": server_id, "invite_code": response}
 
 
@@ -135,4 +163,14 @@ async def kick_server_user(
     response = await kick_user(server_id, user_ids)
     if response == "DELETE 0":
         return JSONResponse({"message": "User does not exist"}, status_code=status.HTTP_400_BAD_REQUEST)
+
+    user_ids_string = ", ".join(map(str, user_ids))
+    users = await UserModel.get_users(user_ids_string)
+    await insert_audit_log(
+        user_id=current_user["id"],
+        entity="server",
+        entity_id=server_id,
+        action=constants.KICK_USER,
+        changes=json.dumps({"action": f"{current_user['username']} kicked {users}"}),
+    )
     return {"message": "user kicked from server successfully"}

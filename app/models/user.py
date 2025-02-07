@@ -57,6 +57,16 @@ class UserModel(DataBase):
         return dict(user) if user else None
 
     @classmethod
+    async def get_users(cls, user_id: str) -> dict:
+        query = """
+                SELECT id, username, email, profile_picture_url
+                  FROM users
+                WHERE id IN ($1);
+            """
+        user = await cls.fetchrow(query, user_id)
+        return dict(user) if user else None
+
+    @classmethod
     async def search_user(cls, term: str, current_user: UUID4):
         query = """
                 SELECT u.id, u.username, u.email, u.profile_picture_url, fr.status

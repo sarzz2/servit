@@ -140,10 +140,10 @@ class ServerUpdate(DataBase):
     @classmethod
     async def regenerate_invite_code(cls, server_id):
         invite_code = generate_invite_code()
-        query = """UPDATE servers SET invite_code = $1"""
+        query = """UPDATE servers SET invite_code = $1 WHERE id = $2"""
         while True:
             try:
-                await cls.fetchval(query, invite_code)
+                await cls.fetchval(query, invite_code, server_id)
                 return invite_code
             except asyncpg.UniqueViolationError:
                 invite_code = cls.generate_invite_code()

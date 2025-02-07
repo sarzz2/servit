@@ -32,6 +32,12 @@ class CategoriesOut(DataBase):
         query = "SELECT id, name, position FROM categories WHERE server_id = $1 ORDER BY position"
         return await cls.fetch(query, server_id)
 
+    @classmethod
+    async def get_category_by_id(cls, server_id: str, category_id: str):
+        """Get all categories for a server"""
+        query = "SELECT id, name, position FROM categories WHERE server_id = $1 and id = $2"
+        return await cls.fetchrow(query, server_id, category_id)
+
 
 class CategoriesUpdate(DataBase):
     name: constr(min_length=3, max_length=255) = Field(None, description="Name of the category")
