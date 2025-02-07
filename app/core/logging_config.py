@@ -1,16 +1,13 @@
-import json
 import logging
 import os
 import sys
 from datetime import datetime
-from logging.handlers import SocketHandler, TimedRotatingFileHandler
+from logging.handlers import TimedRotatingFileHandler
 from queue import Queue
 from threading import Thread
 
 import colorlog
 
-LOGSTASH_HOST = "localhost"
-LOGSTASH_PORT = 5000
 ENVIRONMENT = "dev"
 LOG_DIR = "logs"
 
@@ -18,22 +15,6 @@ if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
 
 log_file_name = f"{LOG_DIR}/application_{ENVIRONMENT}_{datetime.now().strftime('%d%m%Y')}.log"
-
-
-class LogstashFormatter(logging.Formatter):
-    def format(self, record):
-        log_record = {
-            "timestamp": self.formatTime(record, self.datefmt),
-            "message": record.getMessage(),
-            "log_level": record.levelname,
-            "logger_name": record.name,
-            "filename": record.filename,
-            "line_number": record.lineno,
-            "function_name": record.funcName,
-            "process_name": record.processName,
-            "thread_name": record.threadName,
-        }
-        return json.dumps(log_record)
 
 
 def configure_logging():
@@ -57,10 +38,6 @@ def configure_logging():
     )
     console_handler.setFormatter(console_formatter)
 
-    socket_handler = SocketHandler(LOGSTASH_HOST, LOGSTASH_PORT)
-    socket_formatter = LogstashFormatter()
-    socket_handler.setFormatter(socket_formatter)
-
     file_handler = TimedRotatingFileHandler(log_file_name, when="midnight", interval=1, backupCount=365)
     file_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
     file_handler.setFormatter(file_formatter)
@@ -80,7 +57,6 @@ def configure_logging():
                 break
             # Handle the log record in all handlers
             console_handler.handle(record)
-            socket_handler.handle(record)
             file_handler.handle(record)
 
     listener_thread = Thread(target=listener, daemon=True)

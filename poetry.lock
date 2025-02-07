@@ -111,17 +111,17 @@ test = ["distro (>=1.9.0,<1.10.0)", "flake8 (>=6.1,<7.0)", "flake8-pyi (>=24.1.0
 
 [[package]]
 name = "awscli"
-version = "1.37.9"
+version = "1.37.15"
 description = "Universal Command Line Environment for AWS."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "awscli-1.37.9-py3-none-any.whl", hash = "sha256:cd3b093bca1401e6d51f7e64bc71312685f104fe2837f8124d61f77000218b09"},
-    {file = "awscli-1.37.9.tar.gz", hash = "sha256:49b53ab2c7f9418790172f02e95bbacf6e4ab5f5f556a0244b6d8061e40fef39"},
+    {file = "awscli-1.37.15-py3-none-any.whl", hash = "sha256:888a18210058b6ba8ca16ab5c076f49a24f0853ec8923c224c3c34e727beddb2"},
+    {file = "awscli-1.37.15.tar.gz", hash = "sha256:df9c759765cb5b1f560663c64fa5bf112de69bab6c80ef4f8f5043b901cc648c"},
 ]
 
 [package.dependencies]
-botocore = "1.36.9"
+botocore = "1.36.15"
 colorama = ">=0.2.5,<0.4.7"
 docutils = ">=0.10,<0.17"
 PyYAML = ">=3.10,<6.1"
@@ -223,17 +223,17 @@ uvloop = ["uvloop (>=0.15.2)"]
 
 [[package]]
 name = "boto3"
-version = "1.36.9"
+version = "1.36.15"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.36.9-py3-none-any.whl", hash = "sha256:440d0b70990efb732f63b40fa16c663c86fee80347eb4bf3bcc08b593e8ac77f"},
-    {file = "boto3-1.36.9.tar.gz", hash = "sha256:035ed3868ff3b9afe05a49d0bde35582315bc438e60b5e76727a00b107567bfb"},
+    {file = "boto3-1.36.15-py3-none-any.whl", hash = "sha256:b218092b08ce15fe29b2358345f4ccb812a2377a5e9bccd49e391a5976a24202"},
+    {file = "boto3-1.36.15.tar.gz", hash = "sha256:721d689ebd07a9a95f904356bd97f92032d8006a54eea25316ba55a7585ca7e9"},
 ]
 
 [package.dependencies]
-botocore = ">=1.36.9,<1.37.0"
+botocore = ">=1.36.15,<1.37.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.11.0,<0.12.0"
 
@@ -242,13 +242,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.36.9"
+version = "1.36.15"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.36.9-py3-none-any.whl", hash = "sha256:e31d206c7708300c541d0799df73b576bbe7d8bed011687d96323ed48763ffd2"},
-    {file = "botocore-1.36.9.tar.gz", hash = "sha256:cb3baefdb8326fdfae0750015e5868330e18d3a088a31da658df2cc8cba7ac73"},
+    {file = "botocore-1.36.15-py3-none-any.whl", hash = "sha256:fe0f8d786029125f4c66a30b1d81a551f667b0915dac843604ffa0652c5ff475"},
+    {file = "botocore-1.36.15.tar.gz", hash = "sha256:ab8e69930ef6c42784eb2dee6c0256627ca6bba57730ebe3056179d28aa63d44"},
 ]
 
 [package.dependencies]
@@ -257,7 +257,7 @@ python-dateutil = ">=2.1,<3.0.0"
 urllib3 = {version = ">=1.25.4,<2.2.0 || >2.2.0,<3", markers = "python_version >= \"3.10\""}
 
 [package.extras]
-crt = ["awscrt (==0.23.4)"]
+crt = ["awscrt (==0.23.8)"]
 
 [[package]]
 name = "build"
@@ -351,13 +351,13 @@ zstd = ["zstandard (==0.22.0)"]
 
 [[package]]
 name = "certifi"
-version = "2024.12.14"
+version = "2025.1.31"
 description = "Python package for providing Mozilla's CA Bundle."
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "certifi-2024.12.14-py3-none-any.whl", hash = "sha256:1275f7a45be9464efc1173084eaa30f866fe2e47d389406136d332ed4967ec56"},
-    {file = "certifi-2024.12.14.tar.gz", hash = "sha256:b650d30f370c2b724812bee08008be0c4163b163ddaec3f2546c1caf65f191db"},
+    {file = "certifi-2025.1.31-py3-none-any.whl", hash = "sha256:ca78db4565a652026a4db2bcdf68f2fb589ea80d0be70e03929ed730746b84fe"},
+    {file = "certifi-2025.1.31.tar.gz", hash = "sha256:3d5da6925056f6f18f119200434a4780a94263f10d1c21d032a6f6b2baa20651"},
 ]
 
 [[package]]
@@ -913,13 +913,13 @@ idna = ">=2.0.0"
 
 [[package]]
 name = "fastapi"
-version = "0.115.7"
+version = "0.115.8"
 description = "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "fastapi-0.115.7-py3-none-any.whl", hash = "sha256:eb6a8c8bf7f26009e8147111ff15b5177a0e19bb4a45bc3486ab14804539d21e"},
-    {file = "fastapi-0.115.7.tar.gz", hash = "sha256:0f106da6c01d88a6786b3248fb4d7a940d071f6f488488898ad5d354b25ed015"},
+    {file = "fastapi-0.115.8-py3-none-any.whl", hash = "sha256:753a96dd7e036b34eeef8babdfcfe3f28ff79648f86551eb36bfc1b0bf4a8cbf"},
+    {file = "fastapi-0.115.8.tar.gz", hash = "sha256:0ce9111231720190473e222cdf0f07f7206ad7e53ea02beb1d2dc36e2f0741e9"},
 ]
 
 [package.dependencies]
@@ -1318,26 +1318,6 @@ package = ["python-minifier"]
 runtime = ["Js2Py (>=0.71)", "PyJWT (>=1.7.0)", "Whoosh (>=2.7.4)", "amazon.ion (>=0.9.3)", "avro (>=1.11.0)", "aws-encryption-sdk (>=3.1.0)", "confluent-kafka", "dirtyjson (>=1.0.7)", "distro", "docker-registry-client (>=0.5.2)", "dulwich (>=0.19.16)", "graphql-core (>=3.0.3)", "janus (>=0.5.0)", "jsonpatch (>=1.32)", "kafka-python", "kubernetes (>=21.7.0)", "libvirt-python (==10.2.0)", "localstack-core[runtime] (==3.8.1)", "mysql-replication", "paho-mqtt (>=1.5)", "parquet[snappy] (>=1.3.1)", "parse (>=1.19.0)", "pg8000 (>=1.10)", "postgres (>=2.2.2)", "postgresql-proxy (>=0.2.0)", "pproxy-ext (>=2.7.9)", "presto-python-client (>=0.7.0)", "pure-sasl (>=0.6.2)", "pycdlib (>=1.14.0)", "pyftpdlib (>=1.5.6)", "pyhive[hive-pure-sasl] (>=0.7.0)", "pyion2json (>=0.0.2)", "pymysql", "pyqldb (>=3.2,<4.0)", "python-snappy (>=0.6)", "readerwriterlock (>=1.0.7)", "redis (>=5.0)", "rsa (>=4.0)", "sql-metadata (>=2.6.0)", "sqlglot[rs]", "srp-ext (>=1.0.7.1)", "testing.common.database (>=1.1.0)", "thrift (>=0.10.0)", "thrift_sasl (>=0.1.0)", "tornado (>=6.0)", "warrant-ext (>=0.6.2)", "websockets (>=8.1)"]
 test = ["Js2Py (>=0.71)", "PyAthena[pandas]", "aiohttp", "async-timeout", "aws-cdk-lib (>=2.88.0)", "aws-cdk.aws-cognito-identitypool-alpha", "aws_cdk.aws_neptune_alpha", "aws_cdk.aws_redshift_alpha", "aws_xray_sdk (>=2.4.2)", "awsiotsdk", "awsiotsdk", "awswrangler (>=3.5.2)", "coverage[toml] (>=5.0.0)", "deepdiff (>=5.5.0)", "gremlinpython", "jws (>=0.1.3)", "localstack-core[test] (==3.8.1)", "localstack-ext[runtime]", "msal", "msal-extensions", "msrest", "mysql-connector-python", "neo4j", "nest-asyncio (>=1.4.1)", "paramiko (>=2.11.0,<2.12.0)", "portalocker", "pre-commit (>=3.5.0)", "pyarrow", "pymongo", "pymssql (>=2.2.8)", "pytest-instafail (>=0.4.2)", "python-terraform", "redshift_connector", "ruff (>=0.1.0)", "stomp.py (>=8.0.1)"]
 typehint = ["boto3-stubs[acm,amplify,apigateway,apigatewayv2,appconfig,appsync,athena,autoscaling,backup,batch,ce,cloudcontrol,cloudformation,cloudfront,cloudtrail,cloudwatch,codecommit,cognito-identity,cognito-idp,dms,docdb,dynamodb,dynamodbstreams,ec2,ecr,ecs,efs,eks,elasticache,elasticbeanstalk,elbv2,emr,emr-serverless,es,events,firehose,fis,glacier,glue,iam,iot,iot-data,iotanalytics,iotwireless,kafka,kinesis,kinesisanalytics,kinesisanalyticsv2,kms,lakeformation,lambda,logs,mediaconvert,mediastore,mq,mwaa,neptune,opensearch,organizations,pi,qldb,qldb-session,rds,rds-data,redshift,redshift-data,resource-groups,resourcegroupstaggingapi,route53,route53resolver,s3,s3control,sagemaker,sagemaker-runtime,secretsmanager,serverlessrepo,servicediscovery,ses,sesv2,sns,sqs,ssm,sso-admin,stepfunctions,sts,timestream-query,timestream-write,transcribe,xray]", "localstack-ext[test]"]
-
-[[package]]
-name = "logstash"
-version = "0.1dev"
-description = "Python library for Logstash"
-optional = false
-python-versions = "*"
-files = [
-    {file = "logstash-0.1dev.tar.gz", hash = "sha256:99c9742100189f138d27d7602637d42fe4bfeb6e8867c079d5db88f1b9b289da"},
-]
-
-[[package]]
-name = "logstash-formatter"
-version = "0.5.17"
-description = "JSON formatter meant for logstash"
-optional = false
-python-versions = "*"
-files = [
-    {file = "logstash_formatter-0.5.17.tar.gz", hash = "sha256:163f5ef62df5459f1d36dcb54e9c3f8f0c90157a324a3361887532b615bf4fb9"},
-]
 
 [[package]]
 name = "lxml"
@@ -2955,4 +2935,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "e61370243f78fbec59cccefbd122893dd76e45a444b6bdd47f97eceb3d2de81e"
+content-hash = "cf3dbe13eb658b4bb2fd744480af0cd3ee13c3b72fc64a8ddb35defe8431be32"
