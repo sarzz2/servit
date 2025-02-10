@@ -12,6 +12,10 @@ class Settings(BaseSettings):
     SUDO_TOKEN_EXPIRE_MINUTES: int = 60
     DATABASE_URL: str = "postgresql://user:password@localhost/servit"
     TEST_DATABASE_URL: str = "postgresql://user:password@localhost/test_servit"
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    CELERY_BROKER_URL: str = "amqp://guest:guest@localhost:5672//"
+    CELERY_RESULT_BACKEND: str = "rpc://"
     # default values for localstack
     S3_ENDPOINT_URL: str = "http://localhost:4566"
     S3_REGION_NAME: str = "us-east-1"

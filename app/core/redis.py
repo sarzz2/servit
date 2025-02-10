@@ -2,11 +2,13 @@ import logging
 
 from redis.asyncio import Redis
 
+from app.core.config import settings
+
 log = logging.getLogger("fastapi")
 
 
 class RedisClient:
-    def __init__(self, host="localhost", port=6379, decode_responses=True):
+    def __init__(self, host=settings.REDIS_HOST, port=6379, decode_responses=True):
         self.client = Redis(host=host, port=port, decode_responses=decode_responses)
 
     async def connect(self):

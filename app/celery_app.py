@@ -1,10 +1,12 @@
 from celery import Celery
 from celery.schedules import crontab
 
+from app.core.config import settings
+
 celery_app = Celery("servit")
 celery_app.conf.update(
-    broker_url="amqp://guest:guest@localhost:5672//",
-    result_backend="rpc://",
+    broker_url=settings.CELERY_BROKER_URL,
+    result_backend=settings.CELERY_RESULT_BACKEND,
     task_serializer="json",
     accept_content=["json"],
 )

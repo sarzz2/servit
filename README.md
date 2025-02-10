@@ -18,6 +18,16 @@ This project is a backend service built with FastAPI and uses PostgreSQL as its 
 
 ## Setup
 
+You can set up this project by installing all the dependencies and running the server locally or using Docker.
+To run using docker, you can use the following commands:
+
+```bash
+docker compose up --build
+```
+As simple as that.
+
+To run the project locally, follow the steps below:
+
 ### 1. Clone the Repository
 
 ```bash
@@ -32,13 +42,7 @@ poetry install
 
 ### 3. Create a `.env` file in the root directory and add the following environment variables(check .env.example for full variable list):
 
-```bash
-SECRET_KEY=your-secret-key
-DATABASE_URL=postgresql://user:password@localhost/db_name
-TEST_DATABASE_URL=postgresql://user:password@localhost/test_db_name # required to run tests locally
-S3_ENDPOINT_URL=http://localhost:4566 # for localstack
-S3_REGION_NAME=us-east-1
-```
+
 
 ### 4. Apply the database migrations
 

@@ -8,18 +8,29 @@ LOGS_DIR = "./logs"
 
 @shared_task
 def delete_old_logs():
-    """Deletes log files older than 30 days"""
+    """Deletes rotated log files older than 30 days.
+
+    Expected rotated log file format: fastapi.log.YYYY-MM-DD
+    The active log file (fastapi.log) is left untouched.
+    """
     cutoff_date = datetime.now() - timedelta(days=30)
 
     for log_file in os.listdir(LOGS_DIR):
-        if log_file.startswith("application_dev_"):
-            # Extract the date from the filename
-            date_part = log_file.replace("application_dev_", "")
-            date_part = date_part.replace(".log", "")
+        # Skip the active log file
+        if log_file == "fastapi.log":
+            continue
+
+        # Check for rotated log files that match the expected naming pattern.
+        if log_file.startswith("fastapi.log."):
+            # Extract the date part after "fastapi.log."
+            date_part = log_file.split("fastapi.log.")[-1].strip()
             try:
-                log_date = datetime.strptime(date_part, "%d%m%Y")
+                log_date = datetime.strptime(date_part, "%Y-%m-%d")
                 if log_date < cutoff_date:
-                    os.remove(os.path.join(LOGS_DIR, log_file))
-                    print(f"Deleted old log file: {log_file}")
+                    full_path = os.path.join(LOGS_DIR, log_file)
+                    os.remove(full_path)
+                    print(f"Deleted old log file: {full_path}")
             except ValueError:
+                # If the date can't be parsed, skip this file.
+                print(f"Could not parse date from log file: {log_file}")
                 continue
