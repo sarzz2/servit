@@ -16,6 +16,7 @@ router = APIRouter()
 @router.post("/{friend_id}", status_code=status.HTTP_201_CREATED)
 @limiter.limit("500/hour")
 async def send_friend_request(request: Request, friend_id: UUID, current_user: UserModel = Depends(get_current_user)):
+    """Send a new friend request to another user"""
     if friend_id == current_user["id"]:
         raise HTTPException(status_code=400, detail="You cannot send a friend request to yourself")
     try:
@@ -27,6 +28,7 @@ async def send_friend_request(request: Request, friend_id: UUID, current_user: U
 
 @router.patch("/{friend_id}/{status}", status_code=status.HTTP_200_OK)
 async def update_friend_status(friend_id: UUID, status: str, current_user: UserModel = Depends(get_current_user)):
+    """Update sent friend request (Accept, Reject etc.)"""
     valid_statuses = ["pending", "accepted", "rejected", "blocked"]
     if status not in valid_statuses:
         raise HTTPException(status_code=400, detail="Invalid status")
@@ -39,6 +41,7 @@ async def update_friend_status(friend_id: UUID, status: str, current_user: UserM
 
 @router.delete("/cancel/{friend_id}", status_code=status.HTTP_200_OK)
 async def cancel_friend_request(friend_id: UUID, current_user: UserModel = Depends(get_current_user)):
+    """Cancel outgoing friend request"""
     result = await FriendService.cancel_request(current_user["id"], friend_id)
     if not result:
         raise HTTPException(status_code=404, detail="Friend request not found")

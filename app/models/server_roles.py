@@ -94,7 +94,7 @@ class ServerRolesOut(DataBase):
     name: str
     description: str
     color: str
-    permissions: Optional[str]
+    permissions: Optional[str] = Field(None)
 
     @classmethod
     async def get_role(cls, server_id: UUID):
@@ -115,6 +115,13 @@ class ServerRolesOut(DataBase):
             if isinstance(role.permissions, str):
                 role.permissions = json.loads(role.permissions)
         return result
+
+    @classmethod
+    async def get_role_by_id(cls, role_id: UUID):
+        query = """
+            SELECT * FROM server_roles WHERE id = $1
+        """
+        return await cls.fetchrow(query, role_id)
 
 
 class ServerRoleUpdate(DataBase):

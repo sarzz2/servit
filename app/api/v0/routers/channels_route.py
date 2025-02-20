@@ -1,12 +1,15 @@
+import json
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from starlette import status
 
+from app import constants
 from app.api.v0.routers import limiter
 from app.core.dependencies import get_current_user
-from app.models.channels import ChannelIn, ChannelUpdate
+from app.models.channels import ChannelIn, ChannelOut, ChannelUpdate
 from app.models.user import UserModel
+from app.services.v0.audit_log_service import insert_audit_log
 from app.services.v0.channels_service import (
     create_channel,
     del_channel,
@@ -39,6 +42,13 @@ async def create_new_channel(
     if not result:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Category does not belong to the server")
 
+    await insert_audit_log(
+        user_id=current_user["id"],
+        entity="channel",
+        entity_id=server_id,
+        action=constants.CREATE,
+        changes=json.dumps({"action": f"Channel  {channel.name} created successfully by {current_user['username']}"}),
+    )
     log.info(
         f"Channel created successfully: {channel.name} by Username:{current_user['username']}"
         f" & Id {current_user['id']}"
@@ -63,6 +73,7 @@ async def update_category_channel(
     channel: ChannelUpdate,
     current_user: UserModel = Depends(get_current_user),
 ):
+    """Update a channel"""
     result = await update_channel(
         channel_id, name=channel.name, description=channel.description, position=channel.position
     )
@@ -71,16 +82,42 @@ async def update_category_channel(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid channel_id",
         )
+    update_data = await request.json()
+    existing_channel = await ChannelOut.get_channel(channel_id)
+    changes = {
+        key: {"before": getattr(existing_channel, key), "after": value}
+        for key, value in update_data.items()
+        if getattr(existing_channel, key) != value
+    }
+    if changes:
+        await insert_audit_log(
+            user_id=current_user["id"],
+            entity="channel",
+            entity_id=server_id,
+            action=constants.UPDATE,
+            changes=json.dumps(changes),
+        )
     return {"message": "Channel updated successfully", "channel": result}
 
 
 @router.delete("/{server_id}/{channel_id}")
 @check_permissions(["MANAGE_CHANNELS", "MANAGE_SERVER", "ADMINISTRATOR"])
 async def delete_channel(server_id: str, channel_id: str, current_user: UserModel = Depends(get_current_user)):
+    """Delete a channel"""
+    channel_name = await ChannelOut.get_channel(channel_id)
     result = await del_channel(server_id, channel_id)
     if result is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid channel_id",
         )
+    await insert_audit_log(
+        user_id=current_user["id"],
+        entity="channel",
+        entity_id=server_id,
+        action=constants.DELETE,
+        changes=json.dumps(
+            {"action": f"Channel {channel_name.name} deleted successfully by {current_user['username']}"}
+        ),
+    )
     return {"message": "Channel deleted successfully"}

@@ -61,7 +61,7 @@ class UserModel(DataBase):
         query = """
                 SELECT id, username, email, profile_picture_url
                   FROM users
-                WHERE id IN ($1);
+                 WHERE id IN ($1);
             """
         user = await cls.fetchrow(query, user_id)
         return dict(user) if user else None

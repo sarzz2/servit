@@ -4,6 +4,7 @@ from .routers import (
     categories_route,
     channels_route,
     friend_requests_route,
+    server_permissions_route,
     server_roles_route,
     servers_route,
     users_route,
@@ -17,3 +18,4 @@ api_router.include_router(categories_route.router, prefix="/category", tags=["ca
 api_router.include_router(server_roles_route.router, prefix="/roles", tags=["roles"])
 api_router.include_router(friend_requests_route.router, prefix="/friends", tags=["friends"])
 api_router.include_router(channels_route.router, prefix="/channels", tags=["channels"])
+api_router.include_router(server_permissions_route.router, prefix="/permission", tags=["permissions"])

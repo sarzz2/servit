@@ -10,6 +10,7 @@ class PermissionService:
     async def has_permission(user_id: str, server_id: str, required_permissions: list[str]) -> bool:
         query = """
         SELECT EXISTS (
+            -- Check if user has permission via a role
             SELECT 1
             FROM server_user_roles sur
             JOIN server_roles sr ON sr.id = sur.role_id
@@ -19,6 +20,14 @@ class PermissionService:
             AND sr.server_id = $2
             AND sp.name = ANY($3::text[])
         ) OR EXISTS (
+            -- Check if user has permission directly (user-specific permission)
+            SELECT 1
+            FROM server_user_permissions sup
+            JOIN server_permissions sp ON sp.id = sup.permission_id
+            WHERE sup.user_id = $1
+            AND sp.name = ANY($3::text[])
+        ) OR EXISTS (
+            -- Check if user is the owner of the server
             SELECT 1
             FROM servers
             WHERE id = $2

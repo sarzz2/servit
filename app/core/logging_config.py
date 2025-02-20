@@ -8,7 +8,7 @@ from threading import Thread
 import colorlog
 
 # Define the directory and file for FastAPI logs.
-LOG_DIR = "/logs"
+LOG_DIR = "logs"
 
 # Create the log directory if it doesn't exist.
 if not os.path.exists(LOG_DIR):

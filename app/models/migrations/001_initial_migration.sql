@@ -131,7 +131,6 @@ CREATE TABLE IF NOT EXISTS server_denied_permissions (
 CREATE TABLE IF NOT EXISTS server_user_permissions (
     user_id UUID NOT NULL,
     permission_id UUID NOT NULL,
-    granted BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     PRIMARY KEY (user_id, permission_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,

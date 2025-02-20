@@ -1,8 +1,9 @@
 import json
 import logging
-from typing import List
+from datetime import datetime
+from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from starlette import status
 from starlette.responses import JSONResponse
 
@@ -17,6 +18,7 @@ from app.services.v0.server_service import (
     create_server,
     get_all_server_users,
     get_all_user_servers,
+    get_audit_logs,
     get_server_details_by_id,
     get_user_roles_permissions,
     join_server,
@@ -73,6 +75,30 @@ async def get_server_by_id(server_id: str):
             detail="Server not found",
         )
     return {"server": server.model_dump()}
+
+
+@router.get("/audit_logs/{server_id}")
+@check_permissions(["MANAGE_SERVER", "ADMINISTRATOR"])
+async def get_server_audit_logs(
+    server_id: str,
+    start_time: Optional[datetime] = Query(None, description="Start time for filtering logs"),
+    end_time: Optional[datetime] = Query(None, description="End time for filtering logs"),
+    event_type: Optional[str] = Query(None, description="Filter by event type"),
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(50, ge=1, le=100, description="Number of items per page"),
+    current_user: UserModel = Depends(get_current_user),
+):
+    try:
+        # Calculate the offset for pagination
+        offset = (page - 1) * per_page
+        logs = await get_audit_logs(server_id, start_time, end_time, event_type, limit=per_page, offset=offset)
+
+        return {"page": page, "per_page": per_page, "count": len(logs), "logs": logs}
+    except Exception as e:
+        log.error(e)
+        return JSONResponse(
+            {"error": "Failed to retrieve audit logs"}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 @router.post("/join/{invite_link}", status_code=status.HTTP_200_OK)

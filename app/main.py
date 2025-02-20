@@ -92,25 +92,6 @@ async def track_metrics(request: Request, call_next):
     return response
 
 
-@app.exception_handler(RateLimitExceeded)
-async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
-    return ORJSONResponse(
-        status_code=429,
-        content={"detail": [{"msg": "Rate limit exceeded. Please try again later."}]},
-    )
-
-
-app.include_router(api_router, prefix=settings.API_V0_STR)
-
-origins = ["http://localhost:3000", "http://localhost:3001"]
-
-# Add CORS middleware to the FastAPI application
-app.add_middleware(
-    CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
-)
-app.add_middleware(GZipMiddleware, minimum_size=1500)
-
-
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     logger.info(f"\033[1;37m{request.method}\033[0m , {request.url} params: {dict(request.query_params)}")
@@ -129,6 +110,25 @@ async def log_requests(request: Request, call_next):
             f" {HTTPStatus(response.status_code).phrase} in {process_time:.6f}s"
         )
     return response
+
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
+    return ORJSONResponse(
+        status_code=429,
+        content={"detail": [{"msg": "Rate limit exceeded. Please try again later."}]},
+    )
+
+
+app.include_router(api_router, prefix=settings.API_V0_STR)
+
+origins = ["http://localhost:3000", "http://localhost:3001"]
+
+# Add CORS middleware to the FastAPI application
+app.add_middleware(
+    CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
+)
+app.add_middleware(GZipMiddleware, minimum_size=1500)
 
 
 @app.post("/api/v0/upload")

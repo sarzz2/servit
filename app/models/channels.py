@@ -46,6 +46,14 @@ class ChannelOut(DataBase):
                 """
         return await cls.fetch(query, server_id, category_id)
 
+    @classmethod
+    async def get_channel(cls, channel_id: str):
+        """Get Channel from its ID"""
+        query = """
+            SELECT * FROM channels WHERE id = $1
+        """
+        return await cls.fetchrow(query, channel_id)
+
 
 class ChannelUpdate(DataBase):
     name: constr(min_length=3, max_length=100) = Field(None, description="Channel name")

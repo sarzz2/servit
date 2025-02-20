@@ -1,5 +1,8 @@
 import logging
-from typing import List
+from datetime import datetime
+from typing import List, Optional
+
+from asyncpg import Record
 
 from app.core.database import DataBase
 from app.models.server import ServerIn, ServerOut, ServerUpdate
@@ -121,3 +124,24 @@ async def kick_user(server_id: str, user_id: List[str]):
               WHERE server_id = $1 AND user_id = ANY($2::uuid[]);
         """
     return await DataBase.execute(query, server_id, user_id)
+
+
+async def get_audit_logs(
+    server_id: str,
+    start_time: Optional[datetime] = None,
+    end_time: Optional[datetime] = None,
+    event_type: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0,
+) -> list[DataBase] | list[Record]:
+    query = """
+       SELECT *
+         FROM audit_logs
+        WHERE entity_uuid = $1
+          AND ($2::timestamptz IS NULL OR timestamp >= $2)
+          AND ($3::timestamptz IS NULL OR timestamp <= $3)
+          AND ($4::text IS NULL OR entity = $4)
+     ORDER BY timestamp DESC
+        LIMIT $5 OFFSET $6;
+    """
+    return await DataBase.fetch(query, server_id, start_time, end_time, event_type, limit, offset)

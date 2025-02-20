@@ -68,6 +68,7 @@ async def update_category(
     current_user: UserModel = Depends(get_current_user),
     redis: Redis = Depends(get_redis),
 ):
+    """Update the category"""
     # Fetch the existing category to log changes
     try:
         existing_category = (await get_category_by_id(server_id, category_id)).model_dump()
@@ -107,6 +108,7 @@ async def delete_category(
     current_user: UserModel = Depends(get_current_user),
     redis: Redis = Depends(get_redis),
 ):
+    """Delete a category"""
     try:
         category = (await get_category_by_id(server_id, category_id)).model_dump()
         result = await del_category(server_id, category_id, redis)
