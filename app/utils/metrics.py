@@ -14,12 +14,9 @@ from starlette.responses import Response
 
 router = APIRouter()
 
-# Existing Metrics
 REQUEST_COUNT = Counter("http_requests_total", "Total HTTP Requests", ["method", "endpoint", "status_code"])
 REQUEST_LATENCY = Summary("http_request_latency_seconds", "Request latency in seconds")
 REQUEST_HISTOGRAM = Histogram("http_request_duration_seconds", "Histogram for request duration", ["endpoint"])
-
-# New Metrics
 REQUEST_IN_PROGRESS = Gauge("http_requests_in_progress", "Number of requests in progress")
 CPU_USAGE = Gauge("system_cpu_usage", "Current CPU usage percentage")
 MEMORY_USAGE = Gauge("system_memory_usage", "Current memory usage percentage")

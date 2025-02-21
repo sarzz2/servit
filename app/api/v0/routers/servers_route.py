@@ -3,6 +3,7 @@ import logging
 from datetime import datetime
 from typing import List, Optional
 
+import requests
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from starlette import status
 from starlette.responses import JSONResponse
@@ -174,10 +175,35 @@ async def re_generate_invite_code(
 
 
 @router.get("/all_users/{server_id}", status_code=status.HTTP_200_OK)
-async def get_server_users(server_id: str):
-    """Get list of all users in a server"""
-    response = await get_all_server_users(server_id)
-    return response
+async def get_server_users(
+    request: Request,
+    server_id: str,
+    limit: int = Query(25, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+):
+    """Get paginated list of all users in a server with their online statuses"""
+    users = await get_all_server_users(server_id, limit, offset)
+
+    online_users = {}
+    try:
+        auth_header = request.headers.get("Authorization", "")
+        token = auth_header.split(" ")[1]
+        if token:
+            response = requests.get(f"http://localhost:8080/friends/online?token={token}")
+            response.raise_for_status()
+            print(response.json())
+            online_users = {user["userId"]: user["status"] for user in response.json()}
+            print(online_users)
+    except requests.exceptions.RequestException as e:
+        log.error(f"Failed to fetch online users: {e}")
+
+    # Merge online status into user data
+    users = [dict(user) for user in users]
+
+    for user in users:
+        user["status"] = online_users.get(str(user["user_id"]), "offline")
+
+    return {"users": users, "limit": limit, "offset": offset}
 
 
 @router.post("/kick_user/{server_id}", status_code=status.HTTP_200_OK)

@@ -21,6 +21,13 @@ from app.services.v0.server_permissions_service import (
 router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
+@router.get("")
+async def get_server_permissions():
+    """Get all server permissions"""
+    permissions = await ServerPermission.get_all_permissions()
+    return {"permissions": [permission.model_dump() for permission in permissions]}
+
+
 @router.post("/{server_id}/{user_id}")
 @check_permissions(["MANAGE_ROLES", "MANAGE_SERVER", "ADMINISTRATOR"])
 async def assign_permissions_to_user(

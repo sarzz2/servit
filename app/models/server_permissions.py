@@ -15,3 +15,10 @@ class ServerPermission(DataBase):
             SELECT * FROM server_permissions WHERE id IN ($1);
             """
         return await cls.fetch(query, permission_id)
+
+    @classmethod
+    async def get_all_permissions(cls):
+        query = """
+            SELECT * FROM server_permissions;
+            """
+        return await cls.fetch(query)

@@ -110,12 +110,16 @@ async def regenerate_invite_code(server_id: str):
     return await ServerUpdate.regenerate_invite_code(server_id)
 
 
-async def get_all_server_users(server_id: str):
+async def get_all_server_users(server_id: str, limit: int, offset: int):
     query = """
-        SELECT * FROM server_members
-         WHERE server_id = $1;
+        SELECT sm.user_id, sm.server_id, sm.nickname, sm.joined_at, sm.deleted_at, u.username
+          FROM server_members sm
+          JOIN users u ON sm.user_id = u.id
+         WHERE sm.server_id = $1
+      ORDER BY sm.joined_at DESC
+         LIMIT $2 OFFSET $3;
     """
-    return await DataBase.fetch(query, server_id)
+    return await DataBase.fetch(query, server_id, limit, offset)
 
 
 async def kick_user(server_id: str, user_id: List[str]):
