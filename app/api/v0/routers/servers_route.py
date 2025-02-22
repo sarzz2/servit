@@ -3,6 +3,7 @@ import logging
 from datetime import datetime
 from typing import List, Optional
 
+import asyncpg
 import requests
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from starlette import status
@@ -12,10 +13,12 @@ from app import constants
 from app.api.v0.routers import limiter
 from app.core.dependencies import get_current_user
 from app.models.server import ServerIn, ServerUpdate
+from app.models.server_members import BanRequest
 from app.models.user import UserModel
 from app.services.v0.audit_log_service import insert_audit_log
 from app.services.v0.permission_service import check_permissions
 from app.services.v0.server_service import (
+    ban_member_from_server,
     create_server,
     get_all_server_users,
     get_all_user_servers,
@@ -26,6 +29,7 @@ from app.services.v0.server_service import (
     kick_user,
     leave_server,
     regenerate_invite_code,
+    unban_member_from_server,
     update_server,
 )
 
@@ -105,18 +109,16 @@ async def get_server_audit_logs(
 @router.post("/join/{invite_link}", status_code=status.HTTP_200_OK)
 async def join_server_via_link(invite_link: str, current_user: UserModel = Depends(get_current_user)):
     """Join a server using an invitation link"""
-    response = await join_server(invite_link, current_user)
-    if response is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Invalid invite code",
-        )
-    elif response and response[1] == "INSERT 0 0":
-        raise HTTPException(status_code=status.HTTP_302_FOUND, detail="User has already joined the server")
-    return {
-        "message": "Successfully joined server:",
-        "server_details": response[0].model_dump(),
-    }
+    try:
+        response = await join_server(invite_link, current_user)
+        if response and response[1] == "INSERT 0 0":
+            raise HTTPException(status_code=status.HTTP_302_FOUND, detail="User has already joined the server")
+        return {
+            "message": "Successfully joined server:",
+            "server_details": response[0].model_dump(),
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.post("/leave/{server_id}", status_code=status.HTTP_200_OK)
@@ -226,3 +228,62 @@ async def kick_server_user(
         changes=json.dumps({"action": f"{current_user['username']} kicked {users}"}),
     )
     return {"message": "user kicked from server successfully"}
+
+
+@router.post("/ban/{server_id}", status_code=status.HTTP_200_OK)
+@check_permissions(["MANAGE_SERVER", "ADMINISTRATOR", "KICK_MEMBERS", "BAN_MEMBERS"])
+async def ban_member(
+    server_id: str,
+    ban_request: BanRequest,
+    current_user: UserModel = Depends(get_current_user),
+):
+    """
+    Ban one or more members from the server.
+    """
+    try:
+        await ban_member_from_server(server_id, ban_request.user_ids, ban_request.reason)
+
+        users = await UserModel.get_users(", ".join(map(str, ban_request.user_ids)))
+        await insert_audit_log(
+            user_id=current_user["id"],
+            entity="server",
+            entity_id=server_id,
+            action=constants.BAN_USER,
+            changes=json.dumps({"action": f"{current_user['username']} banned {users}"}),
+        )
+        return {"message": "Member banned successfully"}
+    except asyncpg.UniqueViolationError:
+        return JSONResponse(
+            {"error": "User is already banned from the server"},
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@router.post("/unban/{server_id}", status_code=status.HTTP_200_OK)
+@check_permissions(["MANAGE_SERVER", "ADMINISTRATOR", "KICK_MEMBERS", "BAN_MEMBERS"])
+async def unban_member(
+    server_id: str,
+    ban_request: BanRequest,
+    current_user: UserModel = Depends(get_current_user),
+):
+    """
+    Unban a member from the server.
+    """
+    try:
+        await unban_member_from_server(server_id, ban_request.user_ids)
+        users = await UserModel.get_users(", ".join(map(str, ban_request.user_ids)))
+        await insert_audit_log(
+            user_id=current_user["id"],
+            entity="server",
+            entity_id=server_id,
+            action=constants.UNBAN_USER,
+            changes=json.dumps({"action": f"{current_user['username']} unbanned {users}"}),
+        )
+        return {"message": "Member unbanned successfully"}
+    except ValueError as e:
+        return JSONResponse(
+            {"error": str(e)},
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )

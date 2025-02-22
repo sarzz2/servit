@@ -1,3 +1,4 @@
+from typing import List, Optional
 from uuid import UUID
 
 from pydantic import Field, constr
@@ -85,3 +86,8 @@ class ServerMembers(DataBase):
                              WHERE server_id = $1 AND user_id = $2 AND deleted_at IS NULL
                     """
                     await cls.execute(query, server_id, user_id, con=connection)
+
+
+class BanRequest(DataBase):
+    user_ids: List[str]
+    reason: Optional[str]

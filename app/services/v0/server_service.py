@@ -36,7 +36,14 @@ async def get_all_user_servers(user_id):
 async def join_server(invite_link: str, current_user):
     server = await ServerOut.get_server_by_invite_code(invite_link)
     if server is None:
-        return None
+        raise ValueError("Invalid invite link")
+    query = """
+        SELECT * FROM server_bans
+         WHERE server_id = $1 AND user_id = $2;
+        """
+    res = await DataBase.fetch(query, server.id, current_user["id"])
+    if res:
+        raise ValueError("You are banned from this server")
     return server, await ServerMembers.add_member(user_id=current_user["id"], server_id=server.id)
 
 
@@ -128,6 +135,27 @@ async def kick_user(server_id: str, user_id: List[str]):
               WHERE server_id = $1 AND user_id = ANY($2::uuid[]);
         """
     return await DataBase.execute(query, server_id, user_id)
+
+
+async def ban_member_from_server(server_id: str, user_ids: List[str], reason: str):
+    await kick_user(server_id, user_ids)
+    query = """
+        INSERT INTO server_bans (server_id, user_id, reason)
+            SELECT $1, unnest($2::uuid[]), $3;
+
+        """
+    return await DataBase.execute(query, server_id, user_ids, reason)
+
+
+async def unban_member_from_server(server_id: str, user_ids: List[str]):
+    query = """
+            DELETE FROM server_bans
+                  WHERE server_id = $1 AND user_id = ANY($2::uuid[]);
+            """
+    result = await DataBase.execute(query, server_id, user_ids)
+    if result == "DELETE 0":
+        raise ValueError("User not banned")
+    return result
 
 
 async def get_audit_logs(

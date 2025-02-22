@@ -94,12 +94,13 @@ class ServerRolesOut(DataBase):
     name: str
     description: str
     color: str
+    hierarchy: int
     permissions: Optional[str] = Field(None)
 
     @classmethod
     async def get_role(cls, server_id: UUID):
         query = """
-        SELECT sr.id, sr.name, sr.description, sr.color,
+        SELECT sr.id, sr.name, sr.description, sr.color, sr.hierarchy,
                json_agg(
                    json_build_object('id', p.id, 'name', p.name)
                ) AS permissions
@@ -108,6 +109,7 @@ class ServerRolesOut(DataBase):
      LEFT JOIN server_permissions p ON p.id = srp.permission_id
          WHERE sr.server_id = $1
       GROUP BY sr.id
+      ORDER BY sr.hierarchy DESC;
         """
         result = await cls.fetch(query, server_id)
         for role in result:
@@ -128,6 +130,7 @@ class ServerRoleUpdate(DataBase):
     name: Optional[constr(min_length=1, max_length=50)] = Field(None, description="Role name")
     description: Optional[constr(min_length=1, max_length=255)] = Field(None, description="Role description")
     color: Optional[constr(min_length=6, max_length=7)] = Field(None, description="Role color")
+    hierarchy: Optional[int] = Field(None, description="Role hierarchy")
     permissions: Optional[List[UUID]] = Field(None, description="List of permission IDs")
 
     @classmethod
@@ -147,6 +150,9 @@ class ServerRoleUpdate(DataBase):
         if update_data.color is not None:
             update_fields.append("color = $" + str(len(values) + 1))
             values.append(update_data.color)
+        if update_data.hierarchy is not None:
+            update_fields.append("hierarchy = $" + str(len(values) + 1))
+            values.append(update_data.hierarchy)
 
         # If no fields were provided, skip the update
         if not update_fields and not update_data.permissions:
