@@ -15,8 +15,8 @@ async def create_role(server_id: UUID, name: str, description: str, color: str, 
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-async def get_role(server_id: UUID):
-    return await ServerRolesOut.get_role(server_id)
+async def get_role(server_id: UUID, page: int = 1, per_page: int = 25):
+    return await ServerRolesOut.get_role(server_id, page, per_page)
 
 
 async def update_role(role_id: UUID, update_data):

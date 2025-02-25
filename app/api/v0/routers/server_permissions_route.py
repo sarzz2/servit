@@ -3,11 +3,12 @@ from uuid import UUID
 
 import asyncpg
 from fastapi import APIRouter, Depends
+from redis import Redis
 from starlette import status
 from starlette.responses import JSONResponse
 
 from app import constants
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, get_redis
 from app.models.server_permissions import ServerPermission
 from app.models.server_role_permissions import ServerRolePermission
 from app.models.user import UserModel
@@ -15,6 +16,7 @@ from app.services.v0.audit_log_service import insert_audit_log
 from app.services.v0.permission_service import check_permissions
 from app.services.v0.server_permissions_service import (
     assign_permission_to_user,
+    get_permissions,
     remove_permission,
 )
 
@@ -22,10 +24,10 @@ router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
 @router.get("")
-async def get_server_permissions():
+async def get_server_permissions(redis: Redis = Depends(get_redis)):
     """Get all server permissions"""
-    permissions = await ServerPermission.get_all_permissions()
-    return {"permissions": [permission.model_dump() for permission in permissions]}
+    permissions = await get_permissions(redis)
+    return {"permissions": [permission for permission in permissions]}
 
 
 @router.post("/{server_id}/{user_id}")

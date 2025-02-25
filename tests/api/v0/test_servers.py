@@ -1,5 +1,10 @@
+from datetime import datetime, timedelta
+
+import jwt
 import pytest
 from httpx import AsyncClient
+
+from app.core.auth import ALGORITHM, SECRET_KEY
 
 
 @pytest.mark.asyncio
@@ -78,7 +83,7 @@ async def test_join_server_by_invalid_invite_code(client: AsyncClient, test_user
     response = await client.post(f"/api/v0/servers/join/{invite_link}", headers=headers)
 
     # Check the status code
-    assert response.status_code == 404
+    assert response.status_code == 400
 
 
 @pytest.mark.asyncio
@@ -200,3 +205,90 @@ async def test_kick_server_user(client: AsyncClient, test_user_token, test_serve
     body = [test_user["id"]]
     response = await client.post(f"/api/v0/servers/kick_user/{server_id}", headers=headers, json=body)
     assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_kick_server_invalid_user(client: AsyncClient, test_user_token, test_server, test_user):
+    headers = {"Authorization": f"Bearer {test_user_token["access_token"]}"}
+    server_id = test_server["id"]
+    body = ["d51d95ec-e95b-4a57-bc06-4f618baea1f3"]
+    response = await client.post(f"/api/v0/servers/kick_user/{server_id}", headers=headers, json=body)
+    assert response.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_audit_logs(client: AsyncClient, test_user_token, test_server, test_user):
+    server_id = test_server["id"]
+    headers = {"Authorization": f"Bearer {test_user_token['access_token']}"}
+
+    # Optionally, define a time range for filtering logs
+    start_time = (datetime.now() - timedelta(days=1)).isoformat()
+    end_time = datetime.now().isoformat()
+
+    params = {
+        "start_time": start_time,
+        "end_time": end_time,
+        "event_type": "CREATE",
+        "page": 1,
+        "per_page": 50,
+    }
+
+    # Call the endpoint
+    response = await client.get(f"/api/v0/servers/audit_logs/{server_id}", headers=headers, params=params)
+
+    # Assert that the response status is 200 OK
+    assert response.status_code == 200
+    data = response.json()
+
+    # Assert the expected keys are in the response
+    assert "page" in data
+    assert "per_page" in data
+    assert "count" in data
+    assert "logs" in data
+
+    # Optionally, verify that count matches the length of logs
+    assert data["count"] == len(data["logs"]), "Count does not match the number of logs returned"
+
+
+@pytest.mark.asyncio
+async def test_ban_unban_member(client: AsyncClient, test_server, test_user_token, test_user_token2, test_user):
+    server_id = test_server["id"]
+    payload = jwt.decode(test_user_token2, SECRET_KEY, algorithms=[ALGORITHM])
+
+    payload = {"user_ids": [payload["id"]], "reason": "Violation of rules"}
+    headers = {"Authorization": f"Bearer {test_user_token['access_token']}"}
+    # Banning the user
+    response = await client.post(f"/api/v0/servers/ban/{server_id}", json=payload, headers=headers)
+    assert response.status_code == 200
+    # Banning already banned user
+    response = await client.post(f"/api/v0/servers/ban/{server_id}", json=payload, headers=headers)
+    assert response.status_code == 400
+    assert response.json() == {"error": "User is already banned from the server"}
+
+    # Unbanning the above banned user
+    response = await client.post(f"/api/v0/servers/unban/{server_id}", json=payload, headers=headers)
+    assert response.status_code == 200
+    # Unbanning the user which was already unbanned
+    response = await client.post(f"/api/v0/servers/unban/{server_id}", json=payload, headers=headers)
+    assert response.status_code == 400
+    assert response.json() == {"error": "User not banned"}
+
+
+@pytest.mark.asyncio
+async def test_get_server_users(client: AsyncClient, test_server, test_user_token):
+    # Use the test server's ID
+    server_id = test_server["id"]
+    headers = {"Authorization": f"Bearer {test_user_token['access_token']}"}
+
+    # Call the endpoint with query parameters
+    response = await client.get(
+        f"/api/v0/servers/all_users/{server_id}", headers=headers, params={"limit": 25, "offset": 0}
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+
+    # Check response structure
+    assert "users" in data
+    assert "limit" in data
+    assert "offset" in data

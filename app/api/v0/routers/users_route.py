@@ -135,7 +135,6 @@ async def change_user_password(
     # Verify the current password
     current_user_password = await SudoUserModel.get_user(current_user["id"])
     if not verify_password(change_password.current_password, current_user_password["password"]):
-        log.debug("ge")
         raise HTTPException(status_code=401, detail="Current password is incorrect.")
     await update_user_password(change_password.new_password, current_user["id"])
 

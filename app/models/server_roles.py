@@ -98,7 +98,7 @@ class ServerRolesOut(DataBase):
     permissions: Optional[str] = Field(None)
 
     @classmethod
-    async def get_role(cls, server_id: UUID):
+    async def get_role(cls, server_id: UUID, page: int = 1, per_page: int = 20):
         query = """
         SELECT sr.id, sr.name, sr.description, sr.color, sr.hierarchy,
                json_agg(
@@ -109,9 +109,11 @@ class ServerRolesOut(DataBase):
      LEFT JOIN server_permissions p ON p.id = srp.permission_id
          WHERE sr.server_id = $1
       GROUP BY sr.id
-      ORDER BY sr.hierarchy DESC;
+      ORDER BY sr.hierarchy DESC
+      LIMIT $2 OFFSET $3;
         """
-        result = await cls.fetch(query, server_id)
+        offset = (page - 1) * per_page
+        result = await cls.fetch(query, server_id, per_page, offset)
         for role in result:
             # Ensure permissions are loaded as a list of dictionaries
             if isinstance(role.permissions, str):

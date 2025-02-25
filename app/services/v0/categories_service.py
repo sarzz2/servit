@@ -22,7 +22,7 @@ async def get_categories(server_id: str, redis):
     # Retrieve from DB if not in cache and cache the result
     categories = await CategoriesOut.get_categories(server_id)
     categories_dict = [{**category.dict(), "id": str(category.id)} for category in categories]
-    await redis.set(cache_key, json.dumps(categories_dict), ex=3600)
+    await redis.set(cache_key, json.dumps(categories_dict), ex=86400)
     return categories
 
 

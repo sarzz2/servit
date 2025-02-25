@@ -2,11 +2,12 @@ import json
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from redis.asyncio import Redis
 from starlette import status
 
 from app import constants
 from app.api.v0.routers import limiter
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, get_redis
 from app.models.channels import ChannelIn, ChannelOut, ChannelUpdate
 from app.models.user import UserModel
 from app.services.v0.audit_log_service import insert_audit_log
@@ -31,13 +32,11 @@ async def create_new_channel(
     category_id: str,
     channel: ChannelIn,
     current_user: UserModel = Depends(get_current_user),
+    redis: Redis = Depends(get_redis),
 ):
     """Create a new channel"""
     result = await create_channel(
-        server_id=server_id,
-        category_id=category_id,
-        name=channel.name,
-        description=channel.description,
+        server_id=server_id, category_id=category_id, name=channel.name, description=channel.description, redis=redis
     )
     if not result:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Category does not belong to the server")
@@ -57,9 +56,9 @@ async def create_new_channel(
 
 
 @router.get("/{server_id}/{category_id}")
-async def get_category_channels(server_id: str, category_id: str):
+async def get_category_channels(server_id: str, category_id: str, redis: Redis = Depends(get_redis)):
     """Get all channels for a category"""
-    result = await get_channels(server_id, category_id)
+    result = await get_channels(server_id, category_id, redis)
     return result
 
 
@@ -72,10 +71,16 @@ async def update_category_channel(
     channel_id: str,
     channel: ChannelUpdate,
     current_user: UserModel = Depends(get_current_user),
+    redis: Redis = Depends(get_redis),
 ):
     """Update a channel"""
     result = await update_channel(
-        channel_id, name=channel.name, description=channel.description, position=channel.position
+        channel_id,
+        server_id,
+        name=channel.name,
+        description=channel.description,
+        position=channel.position,
+        redis=redis,
     )
     if result is None:
         raise HTTPException(
@@ -102,10 +107,15 @@ async def update_category_channel(
 
 @router.delete("/{server_id}/{channel_id}")
 @check_permissions(["MANAGE_CHANNELS", "MANAGE_SERVER", "ADMINISTRATOR"])
-async def delete_channel(server_id: str, channel_id: str, current_user: UserModel = Depends(get_current_user)):
+async def delete_channel(
+    server_id: str,
+    channel_id: str,
+    current_user: UserModel = Depends(get_current_user),
+    redis: Redis = Depends(get_redis),
+):
     """Delete a channel"""
     channel_name = await ChannelOut.get_channel(channel_id)
-    result = await del_channel(server_id, channel_id)
+    result = await del_channel(server_id, channel_id, redis)
     if result is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

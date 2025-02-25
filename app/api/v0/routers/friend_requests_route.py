@@ -2,7 +2,7 @@ from typing import List
 from uuid import UUID
 
 import asyncpg
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 
 from app.api.v0.routers import limiter
 from app.core.dependencies import get_current_user
@@ -43,26 +43,38 @@ async def update_friend_status(friend_id: UUID, status: str, current_user: UserM
 async def cancel_friend_request(friend_id: UUID, current_user: UserModel = Depends(get_current_user)):
     """Cancel outgoing friend request"""
     result = await FriendService.cancel_request(current_user["id"], friend_id)
-    if not result:
+    if result == "DELETE 0":
         raise HTTPException(status_code=404, detail="Friend request not found")
     return result
 
 
 @router.get("/", response_model=List[FriendRequest], status_code=status.HTTP_200_OK)
-async def get_friends(current_user: UserModel = Depends(get_current_user)):
-    friends = await FriendService.get_all_friends(current_user["id"])
+async def get_friends(
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(25, ge=1, le=100, description="Number of friends per page"),
+    current_user: UserModel = Depends(get_current_user),
+):
+    friends = await FriendService.get_all_friends(current_user["id"], page, per_page)
     return friends
 
 
 @router.get("/requests", response_model=List[FriendRequest], status_code=status.HTTP_200_OK)
-async def get_friend_requests(current_user: UserModel = Depends(get_current_user)):
-    requests = await FriendService.get_pending_requests(current_user["id"])
+async def get_friend_requests(
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(25, ge=1, le=100, description="Number of friend requests per page"),
+    current_user: UserModel = Depends(get_current_user),
+):
+    requests = await FriendService.get_pending_requests(current_user["id"], page, per_page)
     return requests
 
 
 @router.get("/blocked", response_model=List[FriendRequest], status_code=status.HTTP_200_OK)
-async def get_blocked_friends(current_user: UserModel = Depends(get_current_user)):
-    blocked = await FriendService.get_blocked_friends(current_user["id"])
+async def get_blocked_friends(
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(25, ge=1, le=100, description="Number of blocked user per page"),
+    current_user: UserModel = Depends(get_current_user),
+):
+    blocked = await FriendService.get_blocked_friends(current_user["id"], page, per_page)
     return blocked
 
 

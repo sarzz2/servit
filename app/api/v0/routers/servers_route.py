@@ -193,9 +193,7 @@ async def get_server_users(
         if token:
             response = requests.get(f"http://localhost:8080/friends/online?token={token}")
             response.raise_for_status()
-            print(response.json())
             online_users = {user["userId"]: user["status"] for user in response.json()}
-            print(online_users)
     except requests.exceptions.RequestException as e:
         log.error(f"Failed to fetch online users: {e}")
 

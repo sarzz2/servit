@@ -68,13 +68,3 @@ def configure_logging():
     listener_thread.start()
 
     return logger
-
-
-# Example usage:
-if __name__ == "__main__":
-    logger = configure_logging()
-    logger.debug("Debug message")
-    logger.info("Info message")
-    logger.warning("Warning message")
-    logger.error("Error message")
-    logger.critical("Critical message")

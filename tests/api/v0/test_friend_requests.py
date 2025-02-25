@@ -145,7 +145,7 @@ async def test_cancel_invalid_friend_request(client: AsyncClient, test_user_toke
     invalid_friend_id = "00000000-0000-0000-0000-000000000000"
 
     response = await client.delete(f"/api/v0/friends/cancel/{invalid_friend_id}", headers=headers)
-    assert response.status_code == 200
+    assert response.status_code == 404
 
 
 @pytest.mark.asyncio

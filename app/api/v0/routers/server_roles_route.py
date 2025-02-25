@@ -2,7 +2,7 @@ import json
 from uuid import UUID
 
 import asyncpg
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from starlette import status
 from starlette.responses import JSONResponse
 
@@ -63,11 +63,16 @@ async def create_server_role(
 
 @router.get("/{server_id}", status_code=200)
 @check_permissions(["MANAGE_ROLES", "MANAGE_SERVER", "ADMINISTRATOR"])
-async def get_server_role(server_id: UUID, current_user: UserModel = Depends(get_current_user)):
+async def get_server_role(
+    server_id: UUID,
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(25, ge=1, le=100, description="Roles per page"),
+    current_user: UserModel = Depends(get_current_user),
+):
     """
-    Fetch the details of a specific server role, including its permissions.
+    Fetch the details of a server's roles (paginated), including their permissions.
     """
-    return await get_role(server_id=server_id)
+    return await get_role(server_id=server_id, page=page, per_page=per_page)
 
 
 @router.patch("/{server_id}/{role_id}", status_code=200)

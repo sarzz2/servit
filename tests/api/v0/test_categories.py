@@ -82,7 +82,15 @@ async def test_delete_category(client: AsyncClient, test_user_token, test_server
     # Check the status code
     assert response.status_code == 200
 
-    # Check the response message
+
+@pytest.mark.asyncio
+async def test_delete_non_existent_category(client: AsyncClient, test_user_token, test_server, test_category):
+    headers = {"Authorization": f"Bearer {test_user_token['access_token']}"}
+    response = await client.delete(
+        f"/api/v0/category/{test_server['id']}/7442e730-e3d2-442e-917d-96de9846989d", headers=headers
+    )
+    # Check the status code
+    assert response.status_code == 400
 
 
 @pytest.mark.asyncio
