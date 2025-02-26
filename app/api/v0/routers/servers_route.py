@@ -63,9 +63,6 @@ async def get_user_servers(current_user: UserModel = Depends(get_current_user)):
 @router.get("/{server_id}/roles_permissions")
 async def get_server_roles_permissions(server_id: str, current_user: UserModel = Depends(get_current_user)):
     roles_permissions = await get_user_roles_permissions(current_user["id"], server_id)
-
-    if not roles_permissions:
-        raise HTTPException(status_code=404, detail="No roles or permissions found for the user in this server")
     return roles_permissions
 
 
