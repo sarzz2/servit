@@ -15,6 +15,7 @@ async def get_permissions(redis):
     result = await ServerPermission.get_all_permissions()
     serializable_result = [perms.dict() for perms in result]
     await redis.set(cache_key, json.dumps(serializable_result, default=lambda o: str(o)))
+    return result
 
 
 async def assign_permission_to_user(server_id: UUID, user_id: UUID, permission_id: List[UUID]):
