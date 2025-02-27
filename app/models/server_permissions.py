@@ -19,6 +19,6 @@ class ServerPermission(DataBase):
     @classmethod
     async def get_all_permissions(cls):
         query = """
-            SELECT * FROM server_permissions;
+            SELECT * FROM server_permissions WHERE name != 'OWNER';
             """
         return await cls.fetch(query)
