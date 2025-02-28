@@ -17,7 +17,7 @@ async def get_channels(server_id: str, category_id: str, redis):
         return json.loads(cached_data)
 
     result = await ChannelOut.get_channels(server_id, category_id)
-    serializable_result = [channel.dict() for channel in result]
+    serializable_result = [channel.model_dump() for channel in result]
     await redis.set(cache_key, json.dumps(serializable_result, default=lambda o: str(o)), ex=86400)
     return result
 
@@ -30,5 +30,8 @@ async def update_channel(channel_id: str, server_id: str, name: str, description
 
 async def del_channel(server_id: str, channel_id: str, redis):
     """Delete a channel"""
+    result = await ChannelUpdate.del_channel(server_id, channel_id)
+    if result == "DELETE 0":
+        raise ValueError("Minimum 1 channel is required")
     await redis.delete(f"server:{server_id}:channels")
-    return await ChannelUpdate.del_channel(server_id, channel_id)
+    return result

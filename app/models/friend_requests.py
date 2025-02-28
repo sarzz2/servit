@@ -32,7 +32,7 @@ class FriendRequest(DataBase):
         return await cls.fetchrow(query, status, user_id, friend_id)
 
     @classmethod
-    async def get_friends(cls, user_id: UUID, page: int, per_page: int):
+    async def get_friends(cls, user_id: UUID, search_query: str, page: int, per_page: int):
         query = """
             SELECT
               CASE WHEN friends.user_id = $1
@@ -52,34 +52,50 @@ class FriendRequest(DataBase):
                    JOIN users u1 ON friends.user_id = u1.id
                    JOIN users u2 ON friends.friend_id = u2.id
                   WHERE (friends.user_id = $1 OR friends.friend_id = $1) AND status = 'accepted'
-                  LIMIT $2 OFFSET $3;
+                    AND (
+                       $2::text IS NULL
+                       OR $2::text = ''
+                       OR (CASE WHEN friends.user_id = $1 THEN u2.username
+                                ELSE u1.username END) ILIKE '%' || $2::text || '%'
+                            )
+                  LIMIT $3 OFFSET $4;
             """
         offset = (page - 1) * per_page
-        return await cls.fetch(query, user_id, per_page, offset)
+        return await cls.fetch(query, user_id, search_query, per_page, offset)
 
     @classmethod
-    async def get_friend_requests(cls, user_id: UUID, page: int, per_page: int):
+    async def get_friend_requests(cls, user_id: UUID, search_query: str, page: int, per_page: int):
         query = """
             SELECT user_id, friend_id, status, username, email, profile_picture_url FROM friends
               JOIN users ON friends.user_id = users.id
              WHERE friend_id = $1 AND status = 'pending'
+                   AND (
+                       $2::text IS NULL
+                       OR $2::text = ''
+                       OR users.username ILIKE '%' || $2::text || '%'
+                      )
           ORDER BY friends.created_at DESC
-             LIMIT $2 OFFSET $3;
+             LIMIT $3 OFFSET $4;
         """
         offset = (page - 1) * per_page
-        return await cls.fetch(query, user_id, per_page, offset)
+        return await cls.fetch(query, user_id, search_query, per_page, offset)
 
     @classmethod
-    async def get_blocked_friends(cls, user_id: UUID, page: int, per_page: int):
+    async def get_blocked_friends(cls, user_id: UUID, search_query: str, page: int, per_page: int):
         query = """
             SELECT user_id, friend_id, status, username, email, profile_picture_url FROM friends
               JOIN users ON friends.user_id = users.id
              WHERE friend_id = $1 AND status = 'blocked'
+                    AND (
+                       $2::text IS NULL
+                       OR $2::text = ''
+                       OR users.username ILIKE '%' || $2::text || '%'
+                      )
           ORDER BY friends.created_at DESC
-             LIMIT $2 OFFSET $3;
+             LIMIT $3 OFFSET $4;
         """
         offset = (page - 1) * per_page
-        return await cls.fetch(query, user_id, page, offset)
+        return await cls.fetch(query, user_id, search_query, page, offset)
 
     @classmethod
     async def remove_friend(cls, user_id: UUID, friend_id: UUID):

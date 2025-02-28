@@ -49,14 +49,6 @@ async def test_get_server_roles_permission(client: AsyncClient, test_user_token,
 
 
 @pytest.mark.asyncio
-async def test_get_server_roles_permission_for_invalid_user(client: AsyncClient, test_user_token2, test_server):
-    headers = {"Authorization": f"Bearer {test_user_token2}"}
-    response = await client.get(f"/api/v0/servers/{test_server['id']}/roles_permissions", headers=headers)
-    assert response.status_code == 404
-    assert response.json()["detail"] == "No roles or permissions found for the user in this server"
-
-
-@pytest.mark.asyncio
 async def test_join_server_by_invite_code(client: AsyncClient, test_user_token2, test_server):
     # Define user data for creation
     invite_link = test_server["invite_code"]

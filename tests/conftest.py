@@ -69,10 +69,13 @@ async def test_category(test_user_token, test_server):
     async with AsyncClient(app=app, base_url="http://test") as client:
         # Define category data for creation
         category_data = {"name": "testcategory"}
+        category_data2 = {"name": "testcategory2"}
+
         headers = {"Authorization": f"Bearer {test_user_token['access_token']}"}
 
         # Make a POST request to create a category
         await client.post(f"/api/v0/category/{test_server['id']}", json=category_data, headers=headers)
+        await client.post(f"/api/v0/category/{test_server['id']}", json=category_data2, headers=headers)
 
         category_response = await client.get(f"/api/v0/category/{test_server['id']}", headers=headers)
         return category_response.json()[0]

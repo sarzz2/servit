@@ -69,7 +69,7 @@ async def test_update_category_invalid_data(client: AsyncClient, test_user_token
     )
 
     # Check the status code
-    assert response.status_code == 422  # Unprocessable Entity
+    assert response.status_code == 422
 
 
 @pytest.mark.asyncio
@@ -80,7 +80,7 @@ async def test_delete_category(client: AsyncClient, test_user_token, test_server
     response = await client.delete(f"/api/v0/category/{test_server['id']}/{category_id}", headers=headers)
 
     # Check the status code
-    assert response.status_code == 200
+    assert response.status_code == 400
 
 
 @pytest.mark.asyncio

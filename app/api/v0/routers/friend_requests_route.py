@@ -52,9 +52,10 @@ async def cancel_friend_request(friend_id: UUID, current_user: UserModel = Depen
 async def get_friends(
     page: int = Query(1, ge=1, description="Page number"),
     per_page: int = Query(25, ge=1, le=100, description="Number of friends per page"),
+    search_query: str = Query(None, description="Search Keyword"),
     current_user: UserModel = Depends(get_current_user),
 ):
-    friends = await FriendService.get_all_friends(current_user["id"], page, per_page)
+    friends = await FriendService.get_all_friends(current_user["id"], search_query, page, per_page)
     return friends
 
 
@@ -62,9 +63,10 @@ async def get_friends(
 async def get_friend_requests(
     page: int = Query(1, ge=1, description="Page number"),
     per_page: int = Query(25, ge=1, le=100, description="Number of friend requests per page"),
+    search_query: str = Query(None, description="Search Keyword"),
     current_user: UserModel = Depends(get_current_user),
 ):
-    requests = await FriendService.get_pending_requests(current_user["id"], page, per_page)
+    requests = await FriendService.get_pending_requests(current_user["id"], search_query, page, per_page)
     return requests
 
 
@@ -72,9 +74,10 @@ async def get_friend_requests(
 async def get_blocked_friends(
     page: int = Query(1, ge=1, description="Page number"),
     per_page: int = Query(25, ge=1, le=100, description="Number of blocked user per page"),
+    search_query: str = Query(None, description="Search Keyword"),
     current_user: UserModel = Depends(get_current_user),
 ):
-    blocked = await FriendService.get_blocked_friends(current_user["id"], page, per_page)
+    blocked = await FriendService.get_blocked_friends(current_user["id"], search_query, page, per_page)
     return blocked
 
 

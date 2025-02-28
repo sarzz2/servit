@@ -13,20 +13,20 @@ class FriendService:
         return await FriendRequest.update_status(user_id, friend_id, status)
 
     @staticmethod
-    async def get_all_friends(user_id: UUID, page: int = 1, per_page: int = 25):
-        return await FriendRequest.get_friends(user_id, page, per_page)
+    async def get_all_friends(user_id: UUID, search_query: str, page: int = 1, per_page: int = 25):
+        return await FriendRequest.get_friends(user_id, search_query, page, per_page)
 
     @staticmethod
-    async def get_pending_requests(user_id: UUID, page: int = 1, per_page: int = 25):
-        return await FriendRequest.get_friend_requests(user_id, page, per_page)
+    async def get_pending_requests(user_id: UUID, search_query: str, page: int = 1, per_page: int = 25):
+        return await FriendRequest.get_friend_requests(user_id, search_query, page, per_page)
 
     @staticmethod
     async def remove_friend(user_id: UUID, friend_id: UUID):
         return await FriendRequest.remove_friend(user_id, friend_id)
 
     @staticmethod
-    async def get_blocked_friends(user_id: UUID, page: int = 1, per_page: int = 25):
-        return await FriendRequest.get_blocked_friends(user_id, page, per_page)
+    async def get_blocked_friends(user_id: UUID, search_query: str, page: int = 1, per_page: int = 25):
+        return await FriendRequest.get_blocked_friends(user_id, search_query, page, per_page)
 
     @staticmethod
     async def cancel_request(user_id: UUID, friend_id: UUID):

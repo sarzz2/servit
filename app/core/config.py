@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     REDIS_PORT: int = 6379
     CELERY_BROKER_URL: str = "amqp://guest:guest@localhost:5672//"
     CELERY_RESULT_BACKEND: str = "rpc://"
+    GO_BASE_URL: str = "localhost:8080"
     # default values for localstack
     S3_ENDPOINT_URL: str = "http://localhost:4566"
     S3_REGION_NAME: str = "us-east-1"

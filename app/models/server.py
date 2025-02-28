@@ -61,8 +61,23 @@ class ServerIn(DataBase):
                           SELECT (SELECT id FROM inserted_role), id
                             FROM default_permissions
                        RETURNING role_id
-                                )
-                          INSERT INTO server_user_roles (user_id, role_id)
+                                ),
+            inserted_category AS (
+                     INSERT INTO categories (server_id, name, position)
+                          VALUES ((SELECT id FROM inserted_server), 'general', 1)
+                       RETURNING id
+                                 ),
+             inserted_channel AS (
+                     INSERT INTO channels (server_id, category_id, name, description, position)
+                          VALUES (
+                                   (SELECT id FROM inserted_server),
+                                    (SELECT id FROM inserted_category),
+                                    'general',
+                                    'general',
+                                    1
+                                  )
+                       RETURNING id)
+                     INSERT INTO server_user_roles (user_id, role_id)
                           VALUES ($3, (SELECT id FROM inserted_role));
                     """
                 # Try executing the insert query with the generated invite code

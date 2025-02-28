@@ -95,8 +95,9 @@ class ChannelUpdate(DataBase):
     @classmethod
     async def del_channel(cls, server_id: str, channel_id: str):
         """Delete a channel."""
-        query = "DELETE FROM channels WHERE server_id = $1 AND id = $2"
-        result = await cls.execute(query, server_id, channel_id)
-        if result == "DELETE 1":
-            return result
-        return None
+        query = """DELETE FROM channels
+                     WHERE server_id = $1
+                       AND id = $2
+                       AND (SELECT COUNT(*) FROM channels WHERE server_id = $1) > 1;
+                """
+        return await cls.execute(query, server_id, channel_id)

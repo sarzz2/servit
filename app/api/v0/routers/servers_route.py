@@ -11,6 +11,7 @@ from starlette.responses import JSONResponse
 
 from app import constants
 from app.api.v0.routers import limiter
+from app.core.config import settings
 from app.core.dependencies import get_current_user
 from app.models.server import ServerIn, ServerUpdate
 from app.models.server_members import BanRequest
@@ -23,6 +24,7 @@ from app.services.v0.server_service import (
     get_all_server_users,
     get_all_user_servers,
     get_audit_logs,
+    get_banned_members_list,
     get_server_details_by_id,
     get_user_roles_permissions,
     join_server,
@@ -31,6 +33,7 @@ from app.services.v0.server_service import (
     regenerate_invite_code,
     unban_member_from_server,
     update_server,
+    user_server_count,
 )
 
 router = APIRouter(dependencies=[Depends(get_current_user)])
@@ -45,6 +48,9 @@ async def create_new_server(
     current_user: UserModel = Depends(get_current_user),
 ):
     """Create a new server"""
+    result = await user_server_count(current_user)
+    if result > 100:
+        return JSONResponse({"error": "Reached maximum limit of 100 servers"}, status_code=status.HTTP_400_BAD_REQUEST)
     await create_server(current_user, **server.model_dump())
 
     log.info(
@@ -86,6 +92,7 @@ async def get_server_audit_logs(
     start_time: Optional[datetime] = Query(None, description="Start time for filtering logs"),
     end_time: Optional[datetime] = Query(None, description="End time for filtering logs"),
     event_type: Optional[str] = Query(None, description="Filter by event type"),
+    action: Optional[str] = Query(None, description="Filter by action performed"),
     page: int = Query(1, ge=1, description="Page number"),
     per_page: int = Query(50, ge=1, le=100, description="Number of items per page"),
     current_user: UserModel = Depends(get_current_user),
@@ -93,7 +100,7 @@ async def get_server_audit_logs(
     try:
         # Calculate the offset for pagination
         offset = (page - 1) * per_page
-        logs = await get_audit_logs(server_id, start_time, end_time, event_type, limit=per_page, offset=offset)
+        logs = await get_audit_logs(server_id, start_time, end_time, event_type, action, limit=per_page, offset=offset)
 
         return {"page": page, "per_page": per_page, "count": len(logs), "logs": logs}
     except Exception as e:
@@ -107,6 +114,11 @@ async def get_server_audit_logs(
 async def join_server_via_link(invite_link: str, current_user: UserModel = Depends(get_current_user)):
     """Join a server using an invitation link"""
     try:
+        result = await user_server_count(current_user)
+        if result > 100:
+            return JSONResponse(
+                {"error": "Reached maximum limit of 100 servers"}, status_code=status.HTTP_400_BAD_REQUEST
+            )
         response = await join_server(invite_link, current_user)
         if response and response[1] == "INSERT 0 0":
             raise HTTPException(status_code=status.HTTP_302_FOUND, detail="User has already joined the server")
@@ -143,7 +155,7 @@ async def update_server_by_id(
     updated_fields = {key: value for key, value in update_data.items() if value is not None}
     if changes:
         await insert_audit_log(
-            user_id=current_user["id"],
+            user_id=current_user["username"],
             entity="server",
             entity_id=server_id,
             action=constants.UPDATE,
@@ -164,7 +176,7 @@ async def re_generate_invite_code(
 
     response = await regenerate_invite_code(server_id)
     await insert_audit_log(
-        user_id=current_user["id"],
+        user_id=current_user["username"],
         entity="server",
         entity_id=server_id,
         action=constants.UPDATE,
@@ -188,7 +200,7 @@ async def get_server_users(
         auth_header = request.headers.get("Authorization", "")
         token = auth_header.split(" ")[1]
         if token:
-            response = requests.get(f"http://localhost:8080/friends/online?token={token}")
+            response = requests.get(f"{settings.GO_BASE_URL}/friends/online?token={token}")
             response.raise_for_status()
             online_users = {user["userId"]: user["status"] for user in response.json()}
     except requests.exceptions.RequestException as e:
@@ -216,7 +228,7 @@ async def kick_server_user(
     user_ids_string = ", ".join(map(str, user_ids))
     users = await UserModel.get_users(user_ids_string)
     await insert_audit_log(
-        user_id=current_user["id"],
+        user_id=current_user["username"],
         entity="server",
         entity_id=server_id,
         action=constants.KICK_USER,
@@ -240,7 +252,7 @@ async def ban_member(
 
         users = await UserModel.get_users(", ".join(map(str, ban_request.user_ids)))
         await insert_audit_log(
-            user_id=current_user["id"],
+            user_id=current_user["username"],
             entity="server",
             entity_id=server_id,
             action=constants.BAN_USER,
@@ -270,7 +282,7 @@ async def unban_member(
         await unban_member_from_server(server_id, ban_request.user_ids)
         users = await UserModel.get_users(", ".join(map(str, ban_request.user_ids)))
         await insert_audit_log(
-            user_id=current_user["id"],
+            user_id=current_user["username"],
             entity="server",
             entity_id=server_id,
             action=constants.UNBAN_USER,
@@ -282,3 +294,17 @@ async def unban_member(
             {"error": str(e)},
             status_code=status.HTTP_400_BAD_REQUEST,
         )
+
+
+@router.get("/banned/{server_id}")
+@check_permissions(["MANAGE_SERVER", "ADMINISTRATOR", "KICK_MEMBERS", "BAN_MEMBERS"])
+async def banned_members(
+    request: Request,
+    server_id: str,
+    limit: int = Query(25, ge=1, le=100),
+    per_page: int = Query(25, ge=0, le=100),
+    search_query: str = Query(None, description="Search Keyword"),
+    current_user: UserModel = Depends(get_current_user),
+):
+    """Get list of banned members in a server"""
+    return await get_banned_members_list(server_id, search_query, limit, per_page)

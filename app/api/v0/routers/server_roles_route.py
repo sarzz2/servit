@@ -16,6 +16,7 @@ from app.services.v0.server_roles_service import (
     assign_role,
     create_role,
     delete_role,
+    get_all_role_users,
     get_role,
     remove_role,
     update_role,
@@ -46,7 +47,7 @@ async def create_server_role(
             server_role.permissions,
         )
         await insert_audit_log(
-            user_id=current_user["id"],
+            user_id=current_user["username"],
             entity="roles",
             entity_id=str(server_id),
             action=constants.CREATE,
@@ -75,6 +76,17 @@ async def get_server_role(
     return await get_role(server_id=server_id, page=page, per_page=per_page)
 
 
+@router.get("/users/{role_id}", status_code=200)
+async def get_role_users(
+    role_id: UUID,
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(25, ge=1, le=100, description="Users per page"),
+    current_user: UserModel = Depends(get_current_user),
+):
+    """Get all users with a particular role"""
+    return await get_all_role_users(role_id, page, per_page)
+
+
 @router.patch("/{server_id}/{role_id}", status_code=200)
 @check_permissions(["MANAGE_ROLES", "MANAGE_SERVER", "ADMINISTRATOR"])
 async def update_server_role(
@@ -98,7 +110,7 @@ async def update_server_role(
         }
         if changes:
             await insert_audit_log(
-                user_id=current_user["id"],
+                user_id=current_user["username"],
                 entity="roles",
                 entity_id=str(server_id),
                 action=constants.UPDATE,
@@ -121,7 +133,7 @@ async def delete_server_role(role_id: UUID, server_id: UUID, current_user: UserM
     existing_role = await ServerRolesOut.get_role_by_id(role_id)
     await delete_role(role_id)
     await insert_audit_log(
-        user_id=current_user["id"],
+        user_id=current_user["username"],
         entity="roles",
         entity_id=str(server_id),
         action=constants.DELETE,
@@ -141,7 +153,7 @@ async def assign_role_to_user(
             role = await ServerRolesOut.get_role_by_id(role_id)
             user = await UserModel.get_users(str(user_id))
             await insert_audit_log(
-                user_id=current_user["id"],
+                user_id=current_user["username"],
                 entity="roles",
                 entity_id=str(server_id),
                 action=constants.UPDATE,
@@ -168,7 +180,7 @@ async def remove_role_from_user(
         role = await ServerRolesOut.get_role_by_id(role_id)
         user = await UserModel.get_users(str(user_id))
         await insert_audit_log(
-            user_id=current_user["id"],
+            user_id=current_user["username"],
             entity="roles",
             entity_id=str(server_id),
             action=constants.UPDATE,

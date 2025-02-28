@@ -43,7 +43,7 @@ async def assign_permissions_to_user(
         user = await UserModel.get_users(str(user_id))
         permission_names = [permission.name for permission in permissions]
         await insert_audit_log(
-            user_id=current_user["id"],
+            user_id=current_user["username"],
             entity="server permissions",
             entity_id=str(server_id),
             action=constants.CREATE,
@@ -57,6 +57,8 @@ async def assign_permissions_to_user(
         return {"message": "Permission assigned successfully to user"}
     except asyncpg.exceptions.UniqueViolationError:
         return JSONResponse({"error": "Permission already assigned to user"}, status_code=status.HTTP_409_CONFLICT)
+    except asyncpg.exceptions.ForeignKeyViolationError as e:
+        return JSONResponse({"error": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
     except ValueError as e:
         return JSONResponse({"error": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
@@ -74,7 +76,7 @@ async def remove_permissions_from_user(
         user = await UserModel.get_users(str(user_id))
         permission_names = [permission.name for permission in permissions]
         await insert_audit_log(
-            user_id=current_user["id"],
+            user_id=current_user["username"],
             entity="server permissions",
             entity_id=str(server_id),
             action=constants.DELETE,

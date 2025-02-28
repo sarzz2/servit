@@ -4,6 +4,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Request
 from redis.asyncio import Redis
 from starlette import status
+from starlette.responses import JSONResponse
 
 from app import constants
 from app.api.v0.routers import limiter
@@ -42,7 +43,7 @@ async def create_new_channel(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Category does not belong to the server")
 
     await insert_audit_log(
-        user_id=current_user["id"],
+        user_id=current_user["username"],
         entity="channel",
         entity_id=server_id,
         action=constants.CREATE,
@@ -96,7 +97,7 @@ async def update_category_channel(
     }
     if changes:
         await insert_audit_log(
-            user_id=current_user["id"],
+            user_id=current_user["username"],
             entity="channel",
             entity_id=server_id,
             action=constants.UPDATE,
@@ -114,20 +115,19 @@ async def delete_channel(
     redis: Redis = Depends(get_redis),
 ):
     """Delete a channel"""
-    channel_name = await ChannelOut.get_channel(channel_id)
-    result = await del_channel(server_id, channel_id, redis)
-    if result is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid channel_id",
+    try:
+        channel_name = await ChannelOut.get_channel(channel_id)
+        await del_channel(server_id, channel_id, redis)
+
+        await insert_audit_log(
+            user_id=current_user["username"],
+            entity="channel",
+            entity_id=server_id,
+            action=constants.DELETE,
+            changes=json.dumps(
+                {"action": f"Channel {channel_name.name} deleted successfully by {current_user['username']}"}
+            ),
         )
-    await insert_audit_log(
-        user_id=current_user["id"],
-        entity="channel",
-        entity_id=server_id,
-        action=constants.DELETE,
-        changes=json.dumps(
-            {"action": f"Channel {channel_name.name} deleted successfully by {current_user['username']}"}
-        ),
-    )
-    return {"message": "Channel deleted successfully"}
+        return {"message": "Channel deleted successfully"}
+    except ValueError as e:
+        return JSONResponse({"error": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)

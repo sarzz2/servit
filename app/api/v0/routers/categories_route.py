@@ -42,7 +42,7 @@ async def create_new_category(
         f" & Id {current_user['id']}"
     )
     await insert_audit_log(
-        user_id=current_user["id"],
+        user_id=current_user["username"],
         entity="category",
         entity_id=server_id,
         action=constants.CREATE,
@@ -85,7 +85,7 @@ async def update_category(
 
         if changes:
             await insert_audit_log(
-                user_id=current_user["id"],
+                user_id=current_user["username"],
                 entity="category",
                 entity_id=server_id,
                 action=constants.UPDATE,
@@ -110,15 +110,18 @@ async def delete_category(
 ):
     """Delete a category"""
     try:
-        category = (await get_category_by_id(server_id, category_id)).model_dump()
+        category = await get_category_by_id(server_id, category_id)
+        if category is None:
+            raise ValueError("Category does not exist")
+        category = category.model_dump()
         result = await del_category(server_id, category_id, redis)
         await insert_audit_log(
-            user_id=current_user["id"],
+            user_id=current_user["username"],
             entity="category",
             entity_id=server_id,
             action=constants.DELETE,
             changes=json.dumps({"action": f"{current_user['username']} deleted category {category['name']}"}),
         )
         return result
-    except Exception:
-        return JSONResponse({"error": "Category does not exist"}, status_code=status.HTTP_400_BAD_REQUEST)
+    except ValueError as e:
+        return JSONResponse({"error": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)

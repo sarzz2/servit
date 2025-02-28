@@ -21,7 +21,7 @@ async def get_categories(server_id: str, redis):
 
     # Retrieve from DB if not in cache and cache the result
     categories = await CategoriesOut.get_categories(server_id)
-    categories_dict = [{**category.dict(), "id": str(category.id)} for category in categories]
+    categories_dict = [{**category.model_dump(), "id": str(category.id)} for category in categories]
     await redis.set(cache_key, json.dumps(categories_dict), ex=86400)
     return categories
 
@@ -37,5 +37,8 @@ async def update_categories(server_id, category_id, redis, name=None, position=N
 
 
 async def del_category(server_id, category_id, redis):
+    res = await CategoriesUpdate.delete_category(server_id, category_id)
+    if res == "DELETE 0":
+        raise ValueError("Minimum 1 category with a channel is required")
     await redis.delete(f"server:{server_id}:categories")
-    return await CategoriesUpdate.delete_category(server_id, category_id)
+    return res

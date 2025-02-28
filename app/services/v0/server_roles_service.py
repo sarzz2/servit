@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi.exceptions import HTTPException
 from starlette import status
 
+from app.core.database import DataBase
 from app.models.server_roles import ServerRolesIn, ServerRolesOut, ServerRoleUpdate
 from app.models.server_user_roles import ServerUserRolesIn
 
@@ -17,6 +18,17 @@ async def create_role(server_id: UUID, name: str, description: str, color: str, 
 
 async def get_role(server_id: UUID, page: int = 1, per_page: int = 25):
     return await ServerRolesOut.get_role(server_id, page, per_page)
+
+
+async def get_all_role_users(role_id: UUID, page: int = 1, per_page: int = 25):
+    query = """
+            SELECT u.id, sur.role_id, u.username, u.email, u.is_verified, u.profile_picture_url
+              FROM server_user_roles sur
+              JOIN users u ON sur.user_id = u.id
+             WHERE role_id = $1
+             LIMIT $2 OFFSET $3"""
+    offset = (page - 1) * per_page
+    return await DataBase.fetch(query, role_id, per_page, offset)
 
 
 async def update_role(role_id: UUID, update_data):

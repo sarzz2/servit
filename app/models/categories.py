@@ -68,5 +68,9 @@ class CategoriesUpdate(DataBase):
 
     @classmethod
     async def delete_category(cls, server_id: str, category_id: str):
-        query = "DELETE FROM categories WHERE server_id = $1 AND id = $2"
+        query = """
+        DELETE FROM categories WHERE server_id = $1 AND id = $2
+                AND (SELECT COUNT(*) FROM categories WHERE server_id = $1) > 1
+                AND (SELECT COUNT(*) FROM channels WHERE server_id = $1) > 1;
+        """
         return await cls.execute(query, server_id, category_id)

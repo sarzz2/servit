@@ -19,6 +19,12 @@ class ServerRolesPermissionsResponse(DataBase):
     permissions: List[ServerPermission]
 
 
+async def user_server_count(current_user):
+    query = """
+    SELECT DISTINCT COUNT(*) FROM server_members WHERE user_id = $1"""
+    return await DataBase.fetchval(query, current_user["id"])
+
+
 async def create_server(
     current_user, name: str, description: str, is_public: bool = False, server_picture_url: str = None
 ):
@@ -123,12 +129,31 @@ async def regenerate_invite_code(server_id: str):
 
 async def get_all_server_users(server_id: str, limit: int, offset: int):
     query = """
-        SELECT sm.user_id, sm.server_id, sm.nickname, sm.joined_at, sm.deleted_at, u.username
+        SELECT sm.user_id, sm.server_id, sm.nickname, sm.joined_at, sm.deleted_at,
+                u.username, u.profile_picture_url,
+      COALESCE(
+              json_agg(DISTINCT jsonb_build_object('id', r.id, 'name', r.name))
+              FILTER (WHERE r.id IS NOT NULL), null
+            )
+            AS roles,
+      COALESCE(
+              json_agg(DISTINCT jsonb_build_object('id', sp.id, 'name', sp.name))
+              FILTER (WHERE sp.id IS NOT NULL),
+              null
+          ) AS permissions
           FROM server_members sm
           JOIN users u ON sm.user_id = u.id
+     LEFT JOIN server_user_roles sr ON sm.user_id = sr.user_id
+     LEFT JOIN server_roles r ON sr.role_id = r.id
+           AND r.server_id = $1
+     LEFT JOIN server_user_permissions sup ON sm.user_id = sup.user_id
+     LEFT JOIN server_permissions sp ON sup.permission_id = sp.id
+           AND sm.server_id = $1
          WHERE sm.server_id = $1
+      GROUP BY sm.user_id, sm.server_id, sm.nickname, sm.joined_at, sm.deleted_at, u.username, u.profile_picture_url
       ORDER BY sm.joined_at DESC
          LIMIT $2 OFFSET $3;
+
     """
     return await DataBase.fetch(query, server_id, limit, offset)
 
@@ -162,11 +187,29 @@ async def unban_member_from_server(server_id: str, user_ids: List[str]):
     return result
 
 
+async def get_banned_members_list(server_id: str, search_query: str, page: int, per_page: int):
+    query = """
+    SELECT sb.reason, sb.created_at, sb.user_id,
+             u.username, u.profile_picture_url
+      FROM server_bans sb
+      JOIN users u ON sb.user_id = u.id
+     WHERE server_id = $1
+           AND (
+               $2::text IS NULL
+               OR $2::text = ''
+               OR u.username ILIKE '%' || $2::text || '%'
+          )
+     LIMIT $3 OFFSET $4"""
+    offset = (page - 1) * per_page
+    return await DataBase.fetch(query, search_query, server_id, page, offset)
+
+
 async def get_audit_logs(
     server_id: str,
     start_time: Optional[datetime] = None,
     end_time: Optional[datetime] = None,
     event_type: Optional[str] = None,
+    action: Optional[str] = None,
     limit: int = 50,
     offset: int = 0,
 ) -> list[DataBase] | list[Record]:
@@ -177,7 +220,8 @@ async def get_audit_logs(
           AND ($2::timestamptz IS NULL OR timestamp >= $2)
           AND ($3::timestamptz IS NULL OR timestamp <= $3)
           AND ($4::text IS NULL OR entity = $4)
+          AND ($5::text is NULL or action = $5)
      ORDER BY timestamp DESC
-        LIMIT $5 OFFSET $6;
+        LIMIT $6 OFFSET $7;
     """
-    return await DataBase.fetch(query, server_id, start_time, end_time, event_type, limit, offset)
+    return await DataBase.fetch(query, server_id, start_time, end_time, event_type, action, limit, offset)
