@@ -73,4 +73,4 @@ DROP TABLE IF EXISTS subscription_prices;
 DROP TABLE IF EXISTS subscription_tiers;
 DROP TABLE IF EXISTS stripe_webhook_events;
 DROP type staff_roles;
-DROP TABLE IF NOT EXISTS staff;
+DROP TABLE IF EXISTS staff;
