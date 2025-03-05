@@ -29,8 +29,8 @@ class Settings(BaseSettings):
     AWS_SECRET_ACCESS_KEY: str = "test"
     AWS_BUCKET_NAME: str = "my-bucket"
     # stripe
-    STRIPE_SECRET_KEY: str
-    STRIPE_WEBHOOK_SECRET: str
+    STRIPE_SECRET_KEY: str = "stripe-secret-key"
+    STRIPE_WEBHOOK_SECRET: str = "stripe-webhook-secret"
     DEFAULT_PAYMENT_GATEWAY: str = "stripe"
 
     class Config:
