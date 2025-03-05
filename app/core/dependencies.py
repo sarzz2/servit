@@ -6,6 +6,7 @@ from starlette import status
 
 from app.core.auth import verify_token
 from app.core.redis import RedisClient
+from app.models.staff.staff import StaffOut
 from app.models.user import UserModel
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -45,6 +46,17 @@ async def get_sudo_user(token: str = Depends(oauth2_scheme)):
         raise credentials_exception
     except HTTPException as e:
         raise e
+
+
+async def get_current_staff(token: str = Depends(oauth2_scheme)):
+    try:
+        token_data = await verify_token(token)
+        staff = await StaffOut.get_staff_by_id(token_data.id)
+        if staff is None:
+            raise credentials_exception
+        return staff
+    except HTTPException:
+        raise credentials_exception
 
 
 async def get_redis() -> Redis:

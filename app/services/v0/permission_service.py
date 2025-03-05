@@ -55,3 +55,29 @@ def check_permissions(required_permissions: list[str]):
         return wrapper
 
     return decorator
+
+
+# staff wrapper
+async def is_staff(user_id: str, role: str) -> bool:
+    query = "SELECT EXISTS (SELECT 1 FROM staff WHERE id = $1 AND role = $2)"
+    return await DataBase.fetchval(query, user_id, role)
+
+
+def staff_required(allowed_roles: list[str]):
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            current_user = kwargs.get("current_user")
+            if not current_user:
+                raise HTTPException(status_code=403, detail="User is not authenticated")
+            user_role = current_user.role
+            if user_role not in allowed_roles:
+                raise HTTPException(status_code=403, detail="User does not have the required role")
+            # Additionally check that the user exists in the staff table with that role
+            if not await is_staff(current_user.id, user_role):
+                raise HTTPException(status_code=403, detail="User is not authorized as staff")
+            return await func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator

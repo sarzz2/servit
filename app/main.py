@@ -14,6 +14,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from app.api.v0.api import api_router
+from app.core.auth import get_password_hash
 from app.core.config import settings
 from app.core.database import DataBase
 from app.core.dependencies import redis_client
@@ -32,6 +33,16 @@ from migrate import check_all_migrations_applied
 logger = configure_logging()
 
 
+async def create_staff_user(db):
+    query = """
+    INSERT INTO staff(email, name, phone, role, password)
+    VALUES ($1, $2, $3, $4, $5)
+    ON CONFLICT DO NOTHING;
+    """
+    password = get_password_hash(settings.ADMIN_PASSWORD)
+    await db.execute(query, settings.ADMIN_EMAIL, "SuperAdmin", "1234567890", "superadmin", password)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     database_instance = DataBase()
@@ -42,6 +53,7 @@ async def lifespan(app: FastAPI):
         logger.critical("You have pending migrations")
         raise RuntimeError("You have pending migrations")
     asyncio.create_task(update_system_metrics())
+    await create_staff_user(database_instance)
     yield
     await database_instance.close_pool()
     await redis_client.close()

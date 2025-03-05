@@ -124,6 +124,11 @@ async def update_current_user(request: Request, current_user: UserModel = Depend
         user = await UserUpdate.update_user(current_user["id"], **update_data)
     except asyncpg.UniqueViolationError as e:
         raise HTTPException(status_code=400, detail=e.detail)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        log.error(e)
+        raise HTTPException(status_code=500, detail="Internal Server Error")
     return user
 
 

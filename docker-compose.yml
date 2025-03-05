@@ -1,58 +1,58 @@
 services:
-  fastapi:
-    build: .
-    command: >
-      sh -c "python migrate.py && poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000"
-    ports:
-      - "8000:8000"
-    depends_on:
-      postgres:
-          condition: service_healthy
-      redis:
-        condition: service_started
-    environment:
-      - DATABASE_URL=postgresql://user:pass@postgres:5432/servit
-      - REDIS_URL=redis://redis:6379/0
-    volumes:
-      - ./logs:/logs
-
-  rabbitmq:
-    image: rabbitmq:4.0-management
-    container_name: rabbitmq
-    hostname: rabbitmq
-    ports:
-      - "5672:5672"  # AMQP protocol port (for Celery)
-      - "15672:15672" # Management UI
-    environment:
-      - RABBITMQ_DEFAULT_USER=user
-      - RABBITMQ_DEFAULT_PASS=pass
-
-  celery_worker:
-    build: .
-    command: celery -A app.celery_app.celery_app worker --loglevel=debug
-    depends_on:
-      - rabbitmq
-      - postgres
-    environment:
-      - CELERY_BROKER_URL=amqp://user:pass@rabbitmq:5672//
-      - DATABASE_URL=postgresql://user:pass@postgres:5432/servit
-      - REDIS_URL=redis://redis:6379/0
-
-  celery_beat:
-    build: .
-    command: celery -A app.celery_app.celery_app beat --loglevel=debug
-    depends_on:
-      - rabbitmq
-      - postgres
-    environment:
-      - CELERY_BROKER_URL=amqp://user:pass@rabbitmq:5672//
-      - DATABASE_URL=postgresql://user:pass@postgres:5432/servit
-      - REDIS_URL=redis://redis:6379/0
-
-  redis:
-    image: redis:latest
-    ports:
-      - "6379:6379"
+#  fastapi:
+#    build: .
+#    command: >
+#      sh -c "python migrate.py && poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000"
+#    ports:
+#      - "8000:8000"
+#    depends_on:
+#      postgres:
+#          condition: service_healthy
+#      redis:
+#        condition: service_started
+#    environment:
+#      - DATABASE_URL=postgresql://user:pass@postgres:5432/servit
+#      - REDIS_URL=redis://redis:6379/0
+#    volumes:
+#      - ./logs:/logs
+#
+#  rabbitmq:
+#    image: rabbitmq:4.0-management
+#    container_name: rabbitmq
+#    hostname: rabbitmq
+#    ports:
+#      - "5672:5672"  # AMQP protocol port (for Celery)
+#      - "15672:15672" # Management UI
+#    environment:
+#      - RABBITMQ_DEFAULT_USER=user
+#      - RABBITMQ_DEFAULT_PASS=pass
+#
+#  celery_worker:
+#    build: .
+#    command: celery -A app.celery_app.celery_app worker --loglevel=debug
+#    depends_on:
+#      - rabbitmq
+#      - postgres
+#    environment:
+#      - CELERY_BROKER_URL=amqp://user:pass@rabbitmq:5672//
+#      - DATABASE_URL=postgresql://user:pass@postgres:5432/servit
+#      - REDIS_URL=redis://redis:6379/0
+#
+#  celery_beat:
+#    build: .
+#    command: celery -A app.celery_app.celery_app beat --loglevel=debug
+#    depends_on:
+#      - rabbitmq
+#      - postgres
+#    environment:
+#      - CELERY_BROKER_URL=amqp://user:pass@rabbitmq:5672//
+#      - DATABASE_URL=postgresql://user:pass@postgres:5432/servit
+#      - REDIS_URL=redis://redis:6379/0
+#
+#  redis:
+#    image: redis:latest
+#    ports:
+#      - "6379:6379"
 
   postgres:
     image: timescale/timescaledb:latest-pg16
@@ -72,41 +72,41 @@ services:
       retries: 5
       timeout: 3s
 
-  prometheus:
-    image: prom/prometheus:latest
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
-    ports:
-      - "9090:9090"
-
-  grafana:
-    image: grafana/grafana:latest
-    ports:
-      - "3000:3000"
-    volumes:
-      - grafana_data:/var/lib/grafana
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-    depends_on:
-      - prometheus
-
-  loki:
-    image: grafana/loki:2.7.1
-    ports:
-      - "3100:3100"
-    volumes:
-      - ./loki-config.yaml:/etc/loki/local-config.yaml:ro
-      - loki_data:/loki
-    entrypoint: sh -c "mkdir -p /loki/compactor /loki/index /loki/boltdb-cache /loki/chunks /loki/wal && /usr/bin/loki -config.file=/etc/loki/local-config.yaml"
-
-  promtail:
-    image: grafana/promtail:2.7.1
-    volumes:
-      - ./logs:/logs
-      - ./promtail-config.yaml:/etc/promtail/promtail-config.yaml:ro
-    command: -config.file=/etc/promtail/promtail-config.yaml
-
+#  prometheus:
+#    image: prom/prometheus:latest
+#    volumes:
+#      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+#      - prometheus_data:/prometheus
+#    ports:
+#      - "9090:9090"
+#
+#  grafana:
+#    image: grafana/grafana:latest
+#    ports:
+#      - "3000:3000"
+#    volumes:
+#      - grafana_data:/var/lib/grafana
+#    environment:
+#      - GF_SECURITY_ADMIN_PASSWORD=admin
+#    depends_on:
+#      - prometheus
+#
+#  loki:
+#    image: grafana/loki:2.7.1
+#    ports:
+#      - "3100:3100"
+#    volumes:
+#      - ./loki-config.yaml:/etc/loki/local-config.yaml:ro
+#      - loki_data:/loki
+#    entrypoint: sh -c "mkdir -p /loki/compactor /loki/index /loki/boltdb-cache /loki/chunks /loki/wal && /usr/bin/loki -config.file=/etc/loki/local-config.yaml"
+#
+#  promtail:
+#    image: grafana/promtail:2.7.1
+#    volumes:
+#      - ./logs:/logs
+#      - ./promtail-config.yaml:/etc/promtail/promtail-config.yaml:ro
+#    command: -config.file=/etc/promtail/promtail-config.yaml
+#
   localstack:
     image: localstack/localstack:latest
     container_name: localstack
@@ -125,6 +125,6 @@ services:
 
 volumes:
   pgdata:
-  prometheus_data:
-  grafana_data:
-  loki_data:
+#  prometheus_data:
+#  grafana_data:
+#  loki_data:
