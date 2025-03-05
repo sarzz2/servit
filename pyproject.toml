@@ -17,7 +17,7 @@ pydantic = {extras = ["email"], version = "^2.4.2"}
 python-dotenv = "^1.0.0"
 asyncpg = "^0.30.0"
 pyjwt = "^2.9.0"
-bcrypt = "^4.2.0"
+bcrypt = "^4.3.0"
 colorlog = "^6.8.2"
 orjson = "^3.10.15"
 localstack = "^3.7.2"
