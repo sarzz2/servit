@@ -14,7 +14,7 @@ CREATE INDEX idx_server_members_deleted_at ON server_members(deleted_at);
 
 -- Indexes for Server_Roles Table
 CREATE INDEX idx_server_roles_server_id ON server_roles(server_id);
-CREATE INDEX idx_server_roles_hierarchy ON server_roles(hierarchy);
+CREATE INDEX idx_server_roles_hierarchy_2 ON server_roles(hierarchy);
 
 -- Indexes for Server_Role_Permissions Table
 -- Primary key covers (role_id, permission_id), but for queries filtering by permission_id:
@@ -72,6 +72,7 @@ DROP INDEX IF EXISTS idx_server_members_user_id;
 DROP INDEX IF EXISTS idx_server_members_server_id;
 DROP INDEX IF EXISTS idx_server_members_deleted_at;
 DROP INDEX IF EXISTS idx_server_roles_server_id;
+DROP INDEX IF EXISTS idx_server_roles_hierarchy_2;
 DROP INDEX IF EXISTS idx_server_role_permissions_permission_id;
 DROP INDEX IF EXISTS idx_server_user_roles_role_id;
 DROP INDEX IF EXISTS idx_server_denied_permissions_permission_id;
