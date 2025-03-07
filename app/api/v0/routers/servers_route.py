@@ -25,6 +25,7 @@ from app.services.v0.server_service import (
     get_all_user_servers,
     get_audit_logs,
     get_banned_members_list,
+    get_mutual_servers,
     get_server_details_by_id,
     get_user_roles_permissions,
     join_server,
@@ -83,6 +84,15 @@ async def get_server_by_id(server_id: str):
             detail="Server not found",
         )
     return {"server": server.model_dump()}
+
+
+@router.get("/mutual_servers/{user_id}", status_code=status.HTTP_200_OK)
+async def mutual_server(user_id: str, current_user: UserModel = Depends(get_current_user)):
+    """Get Mutual servers with the user id passed"""
+    try:
+        return await get_mutual_servers(user_id, current_user["id"])
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
 
 @router.get("/audit_logs/{server_id}")

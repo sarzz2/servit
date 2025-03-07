@@ -61,6 +61,19 @@ async def update_server(server_id: str, **kwargs):
     return await ServerUpdate.update_server(server_id, **kwargs)
 
 
+async def get_mutual_servers(user_id: str, current_user_id: str):
+    query = """
+            SELECT s.* FROM servers AS s
+             WHERE s.id IN (SELECT a.server_id
+            FROM server_members AS a
+            JOIN server_members AS b
+              ON a.server_id = b.server_id
+            WHERE a.user_id = $2
+              AND b.user_id = $1);
+            """
+    return await DataBase.fetch(query, current_user_id, user_id)
+
+
 async def get_user_roles_permissions(user_id, server_id):
     query = """
                 WITH user_roles AS (

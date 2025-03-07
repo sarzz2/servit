@@ -61,7 +61,9 @@ class UserModel(DataBase):
     @classmethod
     async def get_user(cls, username: str) -> dict:
         query = """
-            SELECT users.id, users.username, users.email, users.profile_picture_url, aud.*
+            SELECT users.id, users.username, users.email, users.profile_picture_url,
+                   aud.first_name, aud.last_name, aud.date_of_birth, aud.gender, aud.phone,
+                   aud.address, aud.country, aud.bio, aud.profile_banner_url
              FROM users
         LEFT JOIN additional_user_details aud ON aud.user_id = users.id
             WHERE users.id = $1;
