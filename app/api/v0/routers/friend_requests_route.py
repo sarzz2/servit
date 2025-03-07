@@ -81,6 +81,14 @@ async def get_blocked_friends(
     return blocked
 
 
+@router.get("/mutual_friends/{user_id}", status_code=status.HTTP_200_OK)
+async def get_mutual_friends(
+    user_id: UUID,
+    current_user: UserModel = Depends(get_current_user),
+):
+    return await FriendService.get_mutual_friends(current_user["id"], user_id)
+
+
 @router.delete("/{friend_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def remove_friend(friend_id: UUID, current_user: UserModel = Depends(get_current_user)):
     result = await FriendService.remove_friend(current_user["id"], friend_id)
