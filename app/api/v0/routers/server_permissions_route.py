@@ -16,8 +16,10 @@ from app.services.v0.audit_log_service import insert_audit_log
 from app.services.v0.permission_service import check_permissions
 from app.services.v0.server_permissions_service import (
     assign_permission_to_user,
+    assign_role_to_category,
     get_permissions,
     remove_permission,
+    remove_role_from_category,
 )
 
 router = APIRouter(dependencies=[Depends(get_current_user)])
@@ -92,20 +94,29 @@ async def remove_permissions_from_user(
         return JSONResponse({"error": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
 
-# TODO Create migrations for below functions first
+@router.post("/assign_role_to_category/{server_id}/{category_id}/{role_id}", status_code=status.HTTP_200_OK)
+@check_permissions(["MANAGE_SERVER", "MANAGE_CHANNELS", "MANAGE_ROLES", "ADMINISTRATOR"])
+async def assign_role_category(
+    server_id: str, category_id: str, role_id: str, current_user: dict = Depends(get_current_user)
+):
+    """
+    Assign a role to a category.
+    """
+    try:
+        result = await assign_role_to_category(category_id, role_id)
+        return {"data": result}
+    except ValueError as e:
+        return {"error": str(e)}
 
 
-async def assign_permission_to_category():
-    pass
-
-
-async def remove_permission_from_category():
-    pass
-
-
-async def assign_permission_to_channel():
-    pass
-
-
-async def remove_permission_from_channel():
-    pass
+@router.post("/remove_role_from_category/{server_id}/{category_id}/{role_id}", status_code=status.HTTP_200_OK)
+@check_permissions(["MANAGE_SERVER", "MANAGE_CHANNELS", "MANAGE_ROLES", "ADMINISTRATOR"])
+async def remove_role_category(
+    server_id: str, category_id: str, role_id: str, current_user: dict = Depends(get_current_user)
+):
+    """Remove role from category"""
+    try:
+        await remove_role_from_category(category_id, role_id)
+        return {"message": "Role removed from category permission"}
+    except ValueError as e:
+        return {"error": str(e)}

@@ -27,10 +27,49 @@ class CategoriesOut(DataBase):
     position: int
 
     @classmethod
-    async def get_categories(cls, server_id: str):
+    async def get_categories(cls, server_id: str, current_user_id: str):
         """Get all categories for a server"""
-        query = "SELECT id, name, position FROM categories WHERE server_id = $1 ORDER BY position"
-        return await cls.fetch(query, server_id)
+        query = """
+            SELECT DISTINCT c.id, c.name, c.position FROM categories c
+              JOIN servers s ON c.server_id = s.id
+             WHERE c.server_id = $1
+               AND (
+                -- If user is the server owner, show all categories.
+                    s.owner_id = $2
+                OR
+                -- If user holds a role with the "ADMINISTRATOR" permission in this server.
+            EXISTS (
+            SELECT 1
+              FROM server_user_roles sur
+              JOIN server_roles sr ON sur.role_id = sr.id
+              JOIN server_role_permissions srp ON sur.role_id = srp.role_id
+              JOIN server_permissions sp ON srp.permission_id = sp.id
+             WHERE sur.user_id = $2 AND sr.server_id = $1 AND sp.name = 'ADMINISTRATOR'
+                   )
+                OR (
+                  -- Otherwise, show the category if it is not restricted...
+        NOT EXISTS (
+            SELECT 1
+              FROM category_role_assignments cra
+             WHERE cra.category_id = c.id
+                   )
+                OR
+                  -- ...or if it is restricted, ensure the user holds one of the required roles.
+            EXISTS (
+            SELECT 1
+              FROM category_role_assignments cra
+             WHERE cra.category_id = c.id
+               AND cra.role_id IN (
+                           SELECT sur.role_id FROM server_user_roles sur
+                             JOIN server_roles sr ON sur.role_id = sr.id
+                            WHERE sur.user_id = $2 AND sr.server_id = $1
+                      )
+                  )
+                )
+              )
+          ORDER BY c.position;
+        """
+        return await cls.fetch(query, server_id, current_user_id)
 
     @classmethod
     async def get_category_by_id(cls, server_id: str, category_id: str):

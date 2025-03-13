@@ -2,13 +2,12 @@ import json
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from redis.asyncio import Redis
 from starlette import status
 from starlette.responses import JSONResponse
 
 from app import constants
 from app.api.v0.routers import limiter
-from app.core.dependencies import get_current_user, get_redis
+from app.core.dependencies import get_current_user
 from app.models.categories import CategoriesIn, CategoriesUpdate
 from app.models.user import UserModel
 from app.services.v0.audit_log_service import insert_audit_log
@@ -33,10 +32,9 @@ async def create_new_category(
     server_id: str,
     category: CategoriesIn,
     current_user: UserModel = Depends(get_current_user),
-    redis: Redis = Depends(get_redis),
 ):
     """Create a new category"""
-    await create_category(server_id=server_id, name=category.name, redis=redis)
+    await create_category(server_id=server_id, name=category.name)
     log.info(
         f"Category created successfully: {category.name} by Username:{current_user['username']}"
         f" & Id {current_user['id']}"
@@ -52,9 +50,12 @@ async def create_new_category(
 
 
 @router.get("/{server_id}")
-async def get_server_categories(server_id: str, redis: Redis = Depends(get_redis)):
+async def get_server_categories(
+    server_id: str,
+    current_user: UserModel = Depends(get_current_user),
+):
     """Get all categories for a server, using Redis cache."""
-    result = await get_categories(server_id, redis)
+    result = await get_categories(server_id, current_user["id"])
     return result
 
 
@@ -66,7 +67,6 @@ async def update_category(
     category_id: str,
     category: CategoriesUpdate,
     current_user: UserModel = Depends(get_current_user),
-    redis: Redis = Depends(get_redis),
 ):
     """Update the category"""
     # Fetch the existing category to log changes
@@ -75,7 +75,7 @@ async def update_category(
         update_data = await request.json()
 
         # Update the category
-        result = await update_categories(server_id, category_id, redis, category.name, category.position)
+        result = await update_categories(server_id, category_id, category.name, category.position)
 
         changes = {
             key: {"before": existing_category[key], "after": value}
@@ -106,7 +106,6 @@ async def delete_category(
     server_id: str,
     category_id: str,
     current_user: UserModel = Depends(get_current_user),
-    redis: Redis = Depends(get_redis),
 ):
     """Delete a category"""
     try:
@@ -114,7 +113,7 @@ async def delete_category(
         if category is None:
             raise ValueError("Category does not exist")
         category = category.model_dump()
-        result = await del_category(server_id, category_id, redis)
+        result = await del_category(server_id, category_id)
         await insert_audit_log(
             user_id=current_user["username"],
             entity="category",

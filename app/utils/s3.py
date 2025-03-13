@@ -17,13 +17,26 @@ log = logging.getLogger("fastapi")
 async def upload_file(request: Request, file: UploadFile = File(...)):
     try:
         unique_key = f"{uuid.uuid4()}_{file.filename.replace(' ', '_')}"
-        s3_client.upload_fileobj(file.file, settings.AWS_BUCKET_NAME, unique_key)
+        s3_client.upload_fileobj(
+            file.file, settings.AWS_BUCKET_NAME, unique_key, ExtraArgs={"Tagging": "status=temporary"}
+        )
         return {
             "url": f"{str(request.base_url)[:-1]}/files/{unique_key}",
             "message": "File uploaded successfully",
         }
     except (NoCredentialsError, PartialCredentialsError):
         return {"error": "Credentials not available"}
+
+
+@router.post("/commit-upload")
+async def commit_upload(file_url: str):
+    # Extract the unique_key from the URL (assuming it's in the path)
+    unique_key = file_url.split("/")[-1]
+    # Remove or update the temporary tag on the S3 object
+    s3_client.put_object_tagging(
+        Bucket=settings.AWS_BUCKET_NAME, Key=unique_key, Tagging={"TagSet": [{"Key": "status", "Value": "permanent"}]}
+    )
+    return {"message": "Upload committed"}
 
 
 @router.get("/files/{unique_key}")

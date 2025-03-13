@@ -180,8 +180,7 @@ class ServerRoleUpdate(DataBase):
             -- Remove old permissions that are not in the new list
                        deleted_permissions AS (
             DELETE FROM server_role_permissions
-                  WHERE role_id = $1 AND permission_id = ANY(
-                 SELECT id FROM server_permissions WHERE id = ANY($2::uuid[]))
+                  WHERE role_id = $1 AND permission_id NOT IN (SELECT unnest($2::uuid[]))
                        )
               -- Insert new permissions that are not already assigned
               INSERT INTO server_role_permissions (role_id, permission_id)
