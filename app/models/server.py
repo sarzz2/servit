@@ -127,9 +127,15 @@ class ServerOut(DataBase):
     @classmethod
     async def get_all_user_servers(cls, user_id):
         query = """
-                SELECT * FROM servers s
-                JOIN server_members sm ON s.id = sm.server_id
-                WHERE sm.user_id = $1 AND sm.deleted_at IS NULL
+                SELECT s.*,
+              COALESCE (sns.notification_preference, sc.default_notification_setting) AS default_notification_setting
+                  FROM servers s
+                  JOIN server_members sm ON s.id = sm.server_id
+             LEFT JOIN server_notification_settings sns
+                    ON sm.server_id = sns.server_id AND sm.user_id = sns.user_id
+                  JOIN server_config sc ON s.id = sc.server_id
+                 WHERE sm.user_id = $1 AND sm.deleted_at IS NULL;
+
             """
         return await cls.fetch(query, user_id)
 
