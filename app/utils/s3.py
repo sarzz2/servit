@@ -28,7 +28,7 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
         return {"error": "Credentials not available"}
 
 
-@router.post("/commit-upload")
+@router.post("/commit-upload/{file_url}")
 async def commit_upload(file_url: str):
     # Extract the unique_key from the URL (assuming it's in the path)
     unique_key = file_url.split("/")[-1]
