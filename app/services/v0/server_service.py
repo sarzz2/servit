@@ -25,6 +25,18 @@ async def user_server_count(current_user):
     return await DataBase.fetchval(query, current_user["id"])
 
 
+async def get_server_member_count(server_id: str):
+    query = """
+    SELECT COUNT(*) FROM server_members WHERE server_id = $1"""
+    return await DataBase.fetchval(query, server_id)
+
+
+async def get_server_config(server_id: str):
+    query = """
+    SELECT * FROM server_config WHERE server_id = $1"""
+    return await DataBase.fetchrow(query, server_id)
+
+
 async def create_server(
     current_user, name: str, description: str, is_public: bool = False, server_picture_url: str = None
 ):
@@ -43,6 +55,11 @@ async def join_server(invite_link: str, current_user):
     server = await ServerOut.get_server_by_invite_code(invite_link)
     if server is None:
         raise ValueError("Invalid invite link")
+    # Check for server member limit
+    result = await user_server_count(current_user)
+    server_config = await get_server_config(server.id)
+    if result > server_config.max_members:
+        raise ValueError(f"Server has reached its maximum member limit of {server_config.max_members}")
     query = """
         SELECT * FROM server_bans
          WHERE server_id = $1 AND user_id = $2;
@@ -50,6 +67,13 @@ async def join_server(invite_link: str, current_user):
     res = await DataBase.fetch(query, server.id, current_user["id"])
     if res:
         raise ValueError("You are banned from this server")
+
+    if 1000 < result < 1010:
+        query = """
+            UPDATE server_config default_notification_setting = 'mentions' WHERE server_id = $1
+        """
+        await DataBase.execute(query, server.id)
+
     return server, await ServerMembers.add_member(user_id=current_user["id"], server_id=server.id)
 
 

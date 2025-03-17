@@ -4,6 +4,7 @@ from .routers import (
     categories_route,
     channels_route,
     friend_requests_route,
+    server_notifications_route,
     server_permissions_route,
     server_roles_route,
     servers_route,
@@ -16,6 +17,7 @@ api_router = APIRouter()
 
 api_router.include_router(users_route.router, prefix="/users", tags=["users"])
 api_router.include_router(servers_route.router, prefix="/servers", tags=["servers"])
+api_router.include_router(server_notifications_route.router, prefix="/servers/notification", tags=["servers"])
 api_router.include_router(categories_route.router, prefix="/category", tags=["categories"])
 api_router.include_router(server_roles_route.router, prefix="/roles", tags=["roles"])
 api_router.include_router(friend_requests_route.router, prefix="/friends", tags=["friends"])

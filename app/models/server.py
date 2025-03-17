@@ -33,6 +33,12 @@ class ServerIn(DataBase):
                      INSERT INTO servers (name, description, owner_id, invite_code, is_public, server_picture_url)
                           VALUES ($1, $2, $3, $4, $5, $6)
                        RETURNING id),
+              inserted_config AS (
+                     INSERT INTO server_config (server_id, default_notification_setting, max_members,
+                                                max_categories, max_channels)
+                          VALUES ((SELECT id FROM inserted_server), 'all', 10000, 50, 100)
+                       RETURNING server_id
+                                 ),
               inserted_member AS (
                      INSERT INTO server_members (server_id, user_id, nickname)
                           VALUES ((SELECT id FROM inserted_server), $3, null)
@@ -99,6 +105,7 @@ class ServerOut(DataBase):
     max_members: int = Field(..., description="Maximum number of members allowed in the server")
     server_picture_url: Optional[str] = Field(None, description="URL of the server picture")
     created_at: datetime.datetime = Field(..., description="Date and time of server creation")
+    default_notification_setting: Optional[str] = None
 
     @classmethod
     async def get_server_by_invite_code(cls, invite_code: str):
@@ -111,7 +118,8 @@ class ServerOut(DataBase):
     @classmethod
     async def get_server_by_id(cls, id: str):
         query = """
-                SELECT * FROM servers
+                SELECT s.*, sc.default_notification_setting FROM servers s
+            INNER JOIN server_config sc on s.id = sc.server_id
                  WHERE id = $1
             """
         return await cls.fetchrow(query, id)
